@@ -2,6 +2,7 @@
 #define WIDTH 10
 #define LENGTH 25
 #define NAME_LENGTH 11
+#define NUMBER_OF_PLAYERS 3
 
 typedef enum
 {
@@ -44,6 +45,16 @@ typedef struct cell
     struct cell* neighbours[DIRECTION_COUNT];
 } cell;
 
+typedef struct
+{
+    cell* start;
+    cell* location;
+    direction current_direction;
+    int movement_points;
+    char direction_dice;
+    char name;
+} player;
+
 const cell empty_cell =
 {
     "[E, E, EE]",
@@ -59,3 +70,4 @@ const cell empty_cell =
         NULL
     }
 };
+const char* const NAME_FORMAT = "[%d, %d, %02d]";
