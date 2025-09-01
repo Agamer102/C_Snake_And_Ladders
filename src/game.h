@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "types.h"
 
-cell maze[FLOORS][WIDTH][LENGTH];
+cell* maze[FLOORS][WIDTH][LENGTH] = {NULL};
 
 void generate_map();
 void fill_section(
@@ -12,12 +13,14 @@ void fill_section(
     int length_end,
     CELL_TYPE type
 );
+void free_map();
 
 void game()
 {
     generate_map();
     printf("Cell size is %ld\n", sizeof(cell));
-    printf("Name of cell 0 is %s", maze[0][4][6].name);
+    printf("Name of cell 0 is %s", maze[0][0][0]->name);
+    free_map();
 }
 
 void generate_map()
@@ -43,15 +46,32 @@ void fill_section(
     CELL_TYPE type
 )
 {
-    cell to_fill = empty_cell;
-    to_fill.type = type;
-
     for (int width = width_start; width < width_end; width++)
     {
         for (int length = length_start; length < length_end; length++)
         {
-            sprintf(to_fill.name, "[%d, %d, %02d]", floor, width, length);
+            cell* to_fill = (cell*)malloc(sizeof(cell));
+            *to_fill = empty_cell;
+            to_fill->type = type;
+            sprintf(to_fill->name, "[%d, %d, %02d]", floor, width, length);
             maze[floor][width][length] = to_fill;
+        }
+    }
+}
+
+void free_map()
+{
+    for (int floor = 0; floor < FLOORS; floor++)
+    {
+        for (int width = 0; width < WIDTH; width++)
+        {
+            for (int length = 0; length < LENGTH; length++)
+            {
+                if (maze[floor][width][length] != NULL)
+                {
+                    free(maze[floor][width][length]);
+                }
+            }
         }
     }
 }
