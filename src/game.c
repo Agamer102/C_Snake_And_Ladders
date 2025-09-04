@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "game.h"
 
 const cell empty_cell =
@@ -26,14 +27,35 @@ int game_ticks = -1;
 
 void game()
 {
+    seed_rand();
     generate_map();
     initialize_players();
-    printf("Size cell: %ld", sizeof(cell));
     while (game_ticks++)
     {
         turn(players[game_ticks % 3]);
     }
     free_map();
+}
+
+void seed_rand()
+{
+    FILE *f = fopen("./inputs/seed.txt", "r");
+    if (f == NULL)
+    {
+        puts("seed.txt not found, using random seed.");
+        srand(time(NULL));
+        return;
+    }
+
+    unsigned int seed;
+    if(fscanf(f, "%u", &seed) != 1)
+    {
+        puts("seed.txt must contain an unsigned int on the first line.");
+        puts("using random seed.");
+        srand(time(NULL));
+        return;
+    }
+    srand(seed);
 }
 
 void turn(player current_player)
@@ -89,7 +111,7 @@ void fill_section(
             cell* to_fill = (cell*)malloc(sizeof(cell));
             if (to_fill == NULL)
             {
-                perror("Memory allocation failed.");
+                puts("Memory allocation failed.");
                 free_map();
                 exit(-1);
             }
