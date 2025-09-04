@@ -1,8 +1,12 @@
+#ifndef TYPES_H
+#define TYPES_H
+
 #define FLOORS 3
 #define WIDTH 10
 #define LENGTH 25
 #define NAME_LENGTH 11
 #define NUMBER_OF_PLAYERS 3
+#define NAME_FORMAT "[%c, %c, %c%c]"
 
 typedef enum
 {
@@ -17,7 +21,6 @@ typedef enum
 
 typedef enum 
 {
-    VOID,
     GAME,
     START,
     WALL,
@@ -38,7 +41,9 @@ typedef enum
 
 typedef struct cell
 {
-    char name[NAME_LENGTH];
+    unsigned char floor;
+    unsigned char width;
+    unsigned char length;
     CELL_TYPE type;
     CELL_OPERATION operation;
     char movement_point_operand;
@@ -54,20 +59,4 @@ typedef struct
     char direction_dice;
     char name;
 } player;
-
-const cell empty_cell =
-{
-    "[E, E, EE]",
-    VOID,
-    ADD,
-    0,
-    {
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-    }
-};
-const char* const NAME_FORMAT = "[%d, %d, %02d]";
+#endif

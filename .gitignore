@@ -2,3 +2,6 @@
 .vscode
 a.exe
 a.out
+*.p
+*.o
+*.s
