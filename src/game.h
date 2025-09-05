@@ -3,7 +3,6 @@
 #include "types.h"
 
 void game();
-void seed_rand();
 void generate_map();
 void turn(player current_player);
 void fill_section(

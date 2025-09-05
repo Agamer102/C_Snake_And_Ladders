@@ -24,10 +24,11 @@ const cell empty_cell =
 cell* maze[FLOORS][WIDTH][LENGTH] = {NULL};
 player players[NUMBER_OF_PLAYERS];
 int game_ticks = -1;
+int stair_count = 0;
 
 void game()
 {
-    seed_rand();
+    //seed_rand();
     generate_map();
     initialize_players();
     while (game_ticks++)
@@ -35,27 +36,6 @@ void game()
         turn(players[game_ticks % 3]);
     }
     free_map();
-}
-
-void seed_rand()
-{
-    FILE *f = fopen("./inputs/seed.txt", "r");
-    if (f == NULL)
-    {
-        puts("seed.txt not found, using random seed.");
-        srand(time(NULL));
-        return;
-    }
-
-    unsigned int seed;
-    if(fscanf(f, "%u", &seed) != 1)
-    {
-        puts("seed.txt must contain an unsigned int on the first line.");
-        puts("using random seed.");
-        srand(time(NULL));
-        return;
-    }
-    srand(seed);
 }
 
 void turn(player current_player)
@@ -133,7 +113,7 @@ void fix_neighbours()
 
 void fix_cell_neighbour(cell* current_cell)
 {
-    for (direction d = NORTH; d < DIRECTION_COUNT; d++)
+    for (DIRECTION d = NORTH; d < DIRECTION_COUNT; d++)
     {
         // -1 NORTH, +1 SOUTH +1 EAST -1 WEST
         int neighbour_width = current_cell->width - (d == NORTH) + (d == SOUTH);
@@ -183,7 +163,7 @@ void iterate_map(void (*function_to_call)(void*))
 void print_cell(cell *to_print)
 {
     printf(
-        "[%1u, %1u, %02u]", 
+        NAME_FORMAT, 
         (unsigned int)to_print->floor, 
         (unsigned int)to_print->width, 
         (unsigned int)to_print->length

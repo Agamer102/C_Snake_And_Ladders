@@ -6,7 +6,8 @@
 #define LENGTH 25
 #define NAME_LENGTH 11
 #define NUMBER_OF_PLAYERS 3
-#define NAME_FORMAT "[%c, %c, %c%c]"
+#define NAME_FORMAT "[%1u, %1u, %02u]"
+#define STAIR_FORMAT "[%1u, %1u, %2u, %1u, %1u, %2u]"
 
 typedef enum
 {
@@ -17,7 +18,7 @@ typedef enum
     SOUTH,
     WEST,
     DIRECTION_COUNT
-} direction;
+} DIRECTION;
 
 typedef enum 
 {
@@ -39,6 +40,13 @@ typedef enum
     HAPPY
 } CELL_OPERATION;
 
+typedef enum
+{
+    BIDIRECTIONAL,
+    TOP_TO_BOTTOM,
+    BOTTOM_TO_TOP
+} STAIR_DIRECTION;
+
 typedef struct cell
 {
     unsigned char floor;
@@ -46,7 +54,7 @@ typedef struct cell
     unsigned char length;
     CELL_TYPE type;
     CELL_OPERATION operation;
-    char movement_point_operand;
+    unsigned char movement_point_operand;
     struct cell* neighbours[DIRECTION_COUNT];
 } cell;
 
@@ -54,9 +62,17 @@ typedef struct
 {
     cell* start;
     cell* location;
-    direction current_direction;
+    DIRECTION current_direction;
     int movement_points;
     char direction_dice;
     char name;
 } player;
+
+typedef struct 
+{
+    cell* start_cell;
+    cell* end_cell;
+    STAIR_DIRECTION direction;
+} stair;
+
 #endif
