@@ -1,9 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include "game.h"
 #include "inputs.h"
 #include "types.h"
 
+
+void get_file_inputs()
+{
+    add_flag();
+    seed_rand_function();
+    add_valid_walls();
+    add_valid_poles();
+    stairs = add_valid_stairs();
+}
 
 //opens a requested file in inputs folder, 
 //also checks for errors
@@ -45,6 +55,46 @@ void seed_rand_function()
 }
 
 
+//checks if placing object at location violates any rules
+/*
+Rules for object placement:
+    1. Object MUST be in map bounds
+    2. Object MUST be on not empty cell
+    3. For the types (-> can be placed on):
+        Stair -> NOT WALL
+        Pole -> NOT WALL
+        Wall -> GAME 
+        Flag -> GAME
+*/
+int can_place_object(int floor, int width, int length, CELL_TYPE type)
+{
+    if (!cell_in_maze_bounds(floor, width, length))
+    {
+        return 0;
+    }
+    //puts("Cell in bounds");
+    cell* current_cell = maze[floor][width][length];
+    //printf("%p\n", current_cell);
+    if (current_cell == NULL)
+    {
+        return 0;
+    }
+    //puts("Cell not NULL");
+    CELL_TYPE maze_cell_type = current_cell->type;
+    switch (type)
+    {
+        case STAIR:
+            return (maze_cell_type != WALL);
+        case POLE:
+            return (maze_cell_type != WALL);
+        case WALL:
+            return (maze_cell_type == GAME);
+        case FLAG:
+            return (maze_cell_type == GAME);
+    }
+}
+
+
 //returns a malloced list of stairs, if no stairs returns NULL
 stair* add_valid_stairs()
 {
@@ -57,48 +107,44 @@ stair* add_valid_stairs()
 
     char buff[100];
     stair stair_list[500];
-    while (fscanf(f, STAIR_FORMAT, &buff) == 6)
+    while (fgets(buff, sizeof(buff), f) != NULL)
     {
         unsigned int start_floor, start_width, start_length;
         unsigned int end_floor, end_width, end_length;
-        sscanf(
+        int args = sscanf(
             buff, 
             STAIR_FORMAT, 
-            start_floor,
-            start_width,
-            start_length,
-            end_floor,
-            end_width,
-            end_length
+            &start_floor,
+            &start_width,
+            &start_length,
+            &end_floor,
+            &end_width,
+            &end_length
         );
-        //check for invalid stairs, by definition
+        if (args != 6)
+        {
+            printf("Stair %s is formatted incorrectly.\n", buff);
+        }
+        // check for invalid stairs, by definition
         if (start_floor >= end_floor)
         {
             printf("Stair %s should be defined from lower to higher floor\n", buff);
             continue;
         }
 
-        cell* start_cell = maze[start_floor][start_width][start_length];
-        cell* end_cell = maze[end_floor][end_width][end_length];
-        
+        // check for invalid stairs, by out of bounds
         if (
-            start_cell == NULL ||
-            end_cell == NULL
+            !can_place_object(start_floor, start_width, start_length, STAIR) ||
+            !can_place_object(end_floor, end_width, end_length, STAIR)
         )
         {
             printf("Invalid stair %s\n", buff);
-            continue;
+            continue;        
         }
+        cell* start_cell = maze[start_floor][start_width][start_length];
+        cell* end_cell = maze[end_floor][end_width][end_length];
 
-        //check for cell validity by type
-        if (start_cell->type != GAME || end_cell->type != GAME)
-        {
-            printf("Stair %s is defined from/to invalid blocks.\n", buff);
-            continue;
-        }
-
-
-        //check for 2 staircases case
+        // check for 2 staircases case
         if (
             start_cell->neighbours[FORCED] != NULL &&
             start_cell->neighbours[SECOND] != NULL 
@@ -113,7 +159,7 @@ stair* add_valid_stairs()
         }
 
 
-        //add the stair to starting cell
+        // add the stair to starting cell
         if (start_cell->neighbours[FORCED] == NULL)
         {
             start_cell->neighbours[FORCED] = end_cell;
@@ -123,7 +169,7 @@ stair* add_valid_stairs()
             start_cell->neighbours[SECOND] = end_cell;
         }
 
-        //add the stair to ending cell
+        // add the stair to ending cell
         if (end_cell->neighbours[FORCED] == NULL)
         {
             end_cell->neighbours[FORCED] = start_cell;
@@ -133,22 +179,24 @@ stair* add_valid_stairs()
             end_cell->neighbours[FORCED] = start_cell;
         }
 
-        //fix cell types
+        // fix cell types
         start_cell->type = STAIR;
         end_cell->type = STAIR;
 
-        //add stair to stair list
+        // add stair to stair list
         stair current_stair = (stair){start_cell, end_cell, BIDIRECTIONAL};
         stair_list[stair_count++] = current_stair;
     }
-    //handle no stairs edge case
+    fclose(f);
+
+    // handle no stairs edge case
     if (stair_count < 1)
     {
         puts("No stairs added to game.");
         return NULL;
     }
 
-    //malloc the stair list
+    // malloc the stair list
     stair* stairs = malloc(stair_count * sizeof(stair));
 
     for (int stair_index = 0; stair_index < stair_count; stair_index++)
@@ -156,4 +204,217 @@ stair* add_valid_stairs()
         stairs[stair_index] = stair_list[stair_index];
     }
     return stairs;
+}
+
+
+void add_valid_poles()
+{
+    FILE *f = open_file("poles.txt");
+    if (f == NULL)
+    {
+        puts("No poles will be added.");
+        return;
+    }
+
+    char buff[100];
+    while (fgets(buff, sizeof(buff), f) != NULL)
+    {
+        unsigned int start_floor, end_floor, width, length;
+        int args = sscanf(
+            buff,
+            POLE_FORMAT,
+            &start_floor,
+            &end_floor,
+            &width,
+            &length
+        );
+        if (args != 4)
+        {
+            printf("Pole %s is formatted incorrectly.\n", buff);
+            continue;
+        }
+
+        //check for pole validity
+        if (start_floor == end_floor)
+        {
+            printf("Poles %s must be defined from/to different floors.\n", buff);
+            continue;
+        }
+
+        int top_floor = MAX(start_floor, end_floor);
+        int bottom_floor = MIN(start_floor, end_floor);
+
+        if (
+            !can_place_object(start_floor, width, length, POLE) ||
+            !can_place_object(end_floor, width, length, POLE)
+        )
+        {
+            //handle edge case where pole defined from 
+            //illegal location, to intersect a legal location
+            if (top_floor - bottom_floor == 2 && can_place_object(1, width, length, POLE))
+            {
+                top_floor = 1;
+            }
+            else
+            {            
+                printf("%i\n", can_place_object(1, width, length, POLE));
+                printf("Pole %s is invalid.\n", buff);
+                continue;
+            }
+        }
+
+        cell* top_cell = maze[top_floor][width][length];
+        cell* bottom_cell = maze[bottom_floor][width][length];
+
+        //if middle cell exists, add that cell as a separete pole
+        if (top_floor - bottom_floor == 2 && can_place_object(1, width, length, POLE))
+        {
+            cell* middle_cell = maze[1][width][length];
+            middle_cell->type = POLE;
+            middle_cell->neighbours[FORCED] = bottom_cell;
+            middle_cell->neighbours[SECOND] = NULL;
+        }
+        top_cell->type = POLE;
+        top_cell->neighbours[FORCED] = bottom_cell;
+        top_cell->neighbours[SECOND] = NULL;
+    }
+    fclose(f);
+}
+
+
+void add_valid_walls()
+{
+    FILE *f = open_file("walls.txt");
+    if (f == NULL)
+    {
+        puts("No additional walls will be added.");
+        return;
+    }
+
+    char buff[100];
+    while (fgets(buff, sizeof(buff), f) != NULL)
+    {
+        unsigned int floor, start_width, start_length;
+        unsigned int end_width, end_length;
+        int args = sscanf(
+            buff,
+            WALL_FORMAT,
+            &floor,
+            &start_width,
+            &start_length,
+            &end_width,
+            &end_length
+        );
+        if (args != 5)
+        {
+            printf("Wall %s is formatted incorrectly.\n", buff);
+            continue;
+        }
+
+        //check for wall validity, by definition
+        if (
+            !(start_width == end_width ||
+            start_length == end_length)
+        )
+        {
+            printf("Wall %s is illegally defined.\n", buff);
+            continue;
+        }
+
+        int valid = 1;
+        if (start_width == end_width)
+        {                
+            int s_length = MIN(start_length, end_length);
+            int l_length = MAX(start_length, end_length);
+            //iterate over each wall cell, to ensure it is valid
+            for (int i = s_length ; i <= l_length ; i++)
+            {
+                if (!can_place_object(floor, start_width, i, WALL))
+                {
+                    valid = 0;
+                }
+            }
+            if (valid == 0)
+            {
+                printf("Wall %s is invalid.\n", buff);
+                continue;
+            }
+            fill_section(floor, start_width, s_length, start_width, l_length, WALL);
+        }
+        else
+        {
+            int s_width = MIN(start_width, end_width);
+            int l_width = MAX(start_width, end_width);
+            //iterate over each wall cell, to ensure it is valid
+            for (int i = s_width; i<= l_width; i++)
+            {
+                if (!can_place_object(floor, i, start_length, WALL))
+                {
+                    valid = 0;
+                }
+            }
+            if (valid == 0)
+            {
+                printf("Wall %s is invalid.\n", buff);
+                continue;
+            }
+            fill_section(floor, s_width, start_length, l_width, start_length, WALL);
+        }
+    }
+    fclose(f); 
+}
+
+
+//if flag is illegally defined, the game cannot start
+//NOTE: this function should be called first
+void add_flag()
+{
+    FILE *f = open_file("flag.txt");
+    if (f == NULL)
+    {
+        printf("ERROR: Unable to locate flag.txt\n");
+        puts("Quitting game.");
+        free_map();
+        exit(-1);
+    }
+    char buff[100];
+    //puts("Trying to add flag");
+    if (fgets(buff, sizeof(buff), f) != NULL)
+    {
+        unsigned int floor, width, length;
+        int args = sscanf(
+            buff,
+            FLAG_FORMAT,
+            &floor,
+            &width,
+            &length
+        );
+        //puts("Scanned flag");
+        if (args != 3)
+        {
+            printf("ERROR: Flag %s is invalidly formatted.\n", buff);
+            puts("Quitting game.");
+            free_map();
+            exit(-1);
+        }
+
+        if (!can_place_object(floor, width, length, FLAG))
+        {
+            printf("ERROR: Flag %s is illegally defined.\n", buff);
+            puts("Quitting game.");
+            free_map();
+            exit(-1);
+        }
+        cell* flag = maze[floor][width][length];
+        flag->type = FLAG;
+    }
+    else
+    {
+        printf("ERROR: Flag must be defined.\n");
+        puts("Quitting game.");
+        free_map();
+        exit(-1);
+    }
+    fclose(f);
+    
 }

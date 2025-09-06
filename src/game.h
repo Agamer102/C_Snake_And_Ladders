@@ -1,6 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 #include "types.h"
+#include "inputs.h"
 
 void game();
 void generate_map();
@@ -16,6 +17,7 @@ void fill_section(
 void initialize_players();
 void fix_neighbours();
 void fix_cell_neighbour(cell* current_cell);
+int cell_in_maze_bounds(int floor, int width, int length);
 void free_map();
 void iterate_map(void (*function_to_call)(void*));
 void print_cell(cell *to_print);

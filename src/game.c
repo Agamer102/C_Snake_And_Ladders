@@ -24,13 +24,17 @@ const cell empty_cell =
 cell* maze[FLOORS][WIDTH][LENGTH] = {NULL};
 player players[NUMBER_OF_PLAYERS];
 int game_ticks = -1;
+
+stair* stairs = NULL;
 int stair_count = 0;
+
 
 void game()
 {
     //seed_rand();
     generate_map();
     initialize_players();
+    get_file_inputs();
     while (game_ticks++)
     {
         turn(players[game_ticks % 3]);
@@ -38,10 +42,12 @@ void game()
     free_map();
 }
 
+
 void turn(player current_player)
 {
     // tis about to get real
 }
+
 
 void initialize_players()
 {
@@ -49,6 +55,7 @@ void initialize_players()
     players[1] = (player){maze[0][6][12], maze[0][9][8], WEST, 100, 0, 'B'};
     players[2] = (player){maze[0][6][12], maze[0][9][16], EAST, 100, 0, 'C'};
 }
+
 
 void generate_map()
 {
@@ -61,7 +68,7 @@ void generate_map()
 
     //middle floor
     fill_section(1, 0, 0, 9, 7, GAME);
-    fill_section(1, 6, 8, 8, 16, GAME);
+    fill_section(1, 6, 8, 9, 16, GAME);
     fill_section(1, 0, 17, 9, 24, GAME);
 
     //top floor
@@ -70,6 +77,7 @@ void generate_map()
     //fix neighbours
     fix_neighbours();
 }
+
 
 /*
 This function, fills segment with uniform blocks of given type
@@ -84,10 +92,14 @@ void fill_section(
     CELL_TYPE type
 )
 {
-    for (int width = width_start; width < width_end; width++)
+    for (int width = width_start; width <= width_end; width++)
     {
-        for (int length = length_start; length < length_end; length++)
+        for (int length = length_start; length <= length_end; length++)
         {
+            if (!cell_in_maze_bounds(floor, width, length))
+            {
+                continue;
+            }
             cell* to_fill = (cell*)malloc(sizeof(cell));
             if (to_fill == NULL)
             {
@@ -106,10 +118,12 @@ void fill_section(
     }
 }
 
+
 void fix_neighbours()
 {
     iterate_map((void *)&fix_cell_neighbour);
 }
+
 
 void fix_cell_neighbour(cell* current_cell)
 {
@@ -120,27 +134,35 @@ void fix_cell_neighbour(cell* current_cell)
         int neighbour_length = current_cell->length + (d == EAST) - (d == WEST);
 
         //check if cell is out of bounds
-        if (
-            neighbour_width > WIDTH ||
-            neighbour_width < 0 || 
-            neighbour_length > LENGTH ||
-            neighbour_length < 0)
+        if (!cell_in_maze_bounds(current_cell->floor, neighbour_width, neighbour_length))
         {
             continue;
         }
         cell *neighbour = maze[current_cell->floor][neighbour_width][neighbour_length];
         //if a neighbour exists, add that neighbour
         if (neighbour != NULL)
-            {
-                current_cell->neighbours[d] = neighbour;
-            }
+        {
+            current_cell->neighbours[d] = neighbour;
+        }
     }
 }
+
+
+int cell_in_maze_bounds(int floor, int width, int length)
+{
+    return (
+        (floor == 0 || floor == 1 || floor == 2) &&
+        (width >= 0 && width < WIDTH) &&
+        (length >= 0 && length < LENGTH)
+    );
+}
+
 
 void free_map()
 {
     iterate_map(&free);
 }
+
 
 void iterate_map(void (*function_to_call)(void*))
 {
@@ -159,6 +181,7 @@ void iterate_map(void (*function_to_call)(void*))
     }
 }
 
+
 // prints a given cell in expected output to std output
 void print_cell(cell *to_print)
 {
@@ -169,6 +192,7 @@ void print_cell(cell *to_print)
         (unsigned int)to_print->length
     );
 }
+
 
 int roll_dice()
 {

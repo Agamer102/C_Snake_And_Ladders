@@ -1,6 +1,9 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 #define FLOORS 3
 #define WIDTH 10
 #define LENGTH 25
@@ -8,6 +11,9 @@
 #define NUMBER_OF_PLAYERS 3
 #define NAME_FORMAT "[%1u, %1u, %02u]"
 #define STAIR_FORMAT "[%1u, %1u, %2u, %1u, %1u, %2u]"
+#define POLE_FORMAT "[%1u, %1u, %1u, %2u]"
+#define WALL_FORMAT "[%1u, %1u, %2u, %1u, %2u]"
+#define FLAG_FORMAT "[%1u, %1u, %2u]"
 
 typedef enum
 {
@@ -27,6 +33,7 @@ typedef enum
     WALL,
     POLE,
     STAIR,
+    FLAG,
     BAWANA
 } CELL_TYPE;
 
