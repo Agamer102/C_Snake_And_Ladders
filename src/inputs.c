@@ -17,15 +17,13 @@ void get_file_inputs()
 
 //opens a requested file in inputs folder, 
 //also checks for errors
-FILE* open_file(char* filename)
+FILE* open_file(char* path)
 {
-    char to_open[100];
-    sprintf(to_open, "./inputs/%s", filename);
-    FILE* f = fopen(to_open, "r");
+    FILE* f = fopen(path, "r");
     
     if (f == NULL)
     {
-        printf("%s not found in inputs folder\n", filename);
+        printf("%s not found\n", path);
         return NULL;
     }
     return f;
@@ -34,7 +32,7 @@ FILE* open_file(char* filename)
 
 void seed_rand_function()
 {
-    FILE* f = open_file("seed.txt");
+    FILE* f = open_file(SEED_TXT);
     if (f == NULL)
     {
         puts("Using random seed.");
@@ -98,7 +96,7 @@ int can_place_object(int floor, int width, int length, CELL_TYPE type)
 //returns a malloced list of stairs, if no stairs returns NULL
 stair* add_valid_stairs()
 {
-    FILE *f = open_file("stairs.txt");
+    FILE *f = open_file(STAIRS_TXT);
     if (f == NULL)
     {
         puts("No stairs will be added.");
@@ -199,6 +197,15 @@ stair* add_valid_stairs()
     // malloc the stair list
     stair* stairs = malloc(stair_count * sizeof(stair));
 
+    //handle malloc fail
+    if (stairs == NULL)
+    {
+        puts("Failed to alloc stairs.");
+        puts("Quitting game");
+        free_map();
+        exit(-1);
+    }
+
     for (int stair_index = 0; stair_index < stair_count; stair_index++)
     {
         stairs[stair_index] = stair_list[stair_index];
@@ -209,7 +216,7 @@ stair* add_valid_stairs()
 
 void add_valid_poles()
 {
-    FILE *f = open_file("poles.txt");
+    FILE *f = open_file(POLES_TXT);
     if (f == NULL)
     {
         puts("No poles will be added.");
@@ -284,7 +291,7 @@ void add_valid_poles()
 
 void add_valid_walls()
 {
-    FILE *f = open_file("walls.txt");
+    FILE *f = open_file(WALLS_TXT);
     if (f == NULL)
     {
         puts("No additional walls will be added.");
@@ -369,7 +376,7 @@ void add_valid_walls()
 //NOTE: this function should be called first
 void add_flag()
 {
-    FILE *f = open_file("flag.txt");
+    FILE *f = open_file(FLAG_TXT);
     if (f == NULL)
     {
         printf("ERROR: Unable to locate flag.txt\n");

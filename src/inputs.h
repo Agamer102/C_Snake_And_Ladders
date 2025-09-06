@@ -3,13 +3,15 @@
 
 #include <stdio.h>
 #include "types.h"
+#include "settings.h"
 
+//from types
 extern cell* maze[FLOORS][WIDTH][LENGTH];
 extern int stair_count;
 extern stair* stairs;
 
 void get_file_inputs();
-FILE* open_file(char* filename);
+FILE* open_file(char* path);
 void seed_rand_function();
 int can_place_object(int floor, int width, int length, CELL_TYPE type);
 stair* add_valid_stairs();

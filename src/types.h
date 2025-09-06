@@ -4,11 +4,6 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-#define FLOORS 3
-#define WIDTH 10
-#define LENGTH 25
-#define NAME_LENGTH 11
-#define NUMBER_OF_PLAYERS 3
 #define NAME_FORMAT "[%1u, %1u, %02u]"
 #define STAIR_FORMAT "[%1u, %1u, %2u, %1u, %1u, %2u]"
 #define POLE_FORMAT "[%1u, %1u, %1u, %2u]"
