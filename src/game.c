@@ -23,7 +23,7 @@ const cell empty_cell =
 
 cell* maze[FLOORS][WIDTH][LENGTH] = {NULL};
 player players[NUMBER_OF_PLAYERS];
-int game_ticks = -1;
+int game_ticks = 0;
 
 stair* stairs = NULL;
 int stair_count = 0;
@@ -35,25 +35,81 @@ void game()
     generate_map();
     initialize_players();
     get_file_inputs();
-    while (game_ticks++)
+    do
     {
-        turn(players[game_ticks % 3]);
-    }
+        turn(players + game_ticks % 3);
+    } while(++game_ticks);
     free_map();
 }
 
 
-void turn(player current_player)
+void turn(player* current_player)
 {
-    // tis about to get real
+    unsigned char dice = roll_dice();
+
+    //handle starting area case
+    if (current_player->location == current_player->start)
+    {
+        if (dice != 6)
+        {
+            printf(
+                "%c is at the starting area and rolls %u on the movement dice cannot enter the maze.\n",
+                current_player->name, dice
+            );
+        }
+        else
+        {
+            current_player->location = current_player->start->neighbours[FORCED];
+            current_player->current_direction = current_player->start_direction;
+            printf(
+                "%c is at the starting area and rolls 6 on the movement dice and is placed on ",
+                current_player->name
+            );
+            print_cell(current_player->location);
+            printf(" of the maze.\n");
+        }
+        return;
+    }
+    //BLOCKED TEMPORARILY
+    return;
+
+    //standard movement section
+
+    //standard dice message
+    printf("%c rolls and %u on the movement dice", current_player->name, dice);
+
+    //check if direction dice must be rolled, once every 4 player ticks
+    if (current_player->direction_dice == 3)
+    {
+        DIRECTION movement_dice = roll_dice();
+        if (movement_dice != FORCED || movement_dice != DIRECTION_COUNT)
+        {
+            current_player->current_direction = movement_dice;
+            printf(" and ");
+            print_direction(movement_dice);
+            printf(" on the direction dice, changes direction to ");
+            print_direction(movement_dice);
+        }
+    }
+
+    //set movement dice ticks
+    //modulos to prevent value from exploding
+    current_player->direction_dice = (current_player->direction_dice + 1) % 4;
+
+
 }
 
 
 void initialize_players()
 {
-    players[0] = (player){maze[0][6][12], maze[0][6][12], NORTH, 100, 0, 'A'};
-    players[1] = (player){maze[0][6][12], maze[0][9][8], WEST, 100, 0, 'B'};
-    players[2] = (player){maze[0][6][12], maze[0][9][16], EAST, 100, 0, 'C'};
+    players[0] = (player){maze[0][6][12], maze[0][6][12], NORTH, NORTH, 100, 0, 'A'};
+    players[1] = (player){maze[0][9][8], maze[0][9][8], WEST, WEST, 100, 0, 'B'};
+    players[2] = (player){maze[0][9][16], maze[0][9][16], EAST, EAST, 100, 0, 'C'};
+
+    //handle special case for maze starting cells
+    maze[0][6][12]->neighbours[FORCED] = maze[0][5][12];
+    maze[0][9][8]->neighbours[FORCED] = maze[0][9][7];
+    maze[0][9][16]->neighbours[FORCED] = maze[0][9][17];
 }
 
 
@@ -74,7 +130,6 @@ void generate_map()
     //top floor
     fill_section(2, 0, 8, 9, 16, GAME);
 
-    //fix neighbours
     fix_neighbours();
 }
 
@@ -134,10 +189,14 @@ void fix_cell_neighbour(cell* current_cell)
         int neighbour_length = current_cell->length + (d == EAST) - (d == WEST);
 
         //check if cell is out of bounds
-        if (!cell_in_maze_bounds(current_cell->floor, neighbour_width, neighbour_length))
+        if (
+            !cell_in_maze_bounds(current_cell->floor, neighbour_width, neighbour_length) ||
+            current_cell->type == START
+        )
         {
             continue;
         }
+    
         cell *neighbour = maze[current_cell->floor][neighbour_width][neighbour_length];
         //if a neighbour exists, add that neighbour
         if (neighbour != NULL)
@@ -164,6 +223,8 @@ void free_map()
 }
 
 
+//iterates over whole map, and calls a function on it
+//will not call on NULL cell
 void iterate_map(void (*function_to_call)(void*))
 {
     for (int floor = 0; floor < FLOORS; floor++)
@@ -194,7 +255,28 @@ void print_cell(cell *to_print)
 }
 
 
-int roll_dice()
+//prints a given direction
+void print_direction(DIRECTION dir)
 {
-    return rand() % 6 + 1;
+    switch (dir)
+    {
+        case NORTH:
+            printf("North");
+            break;
+        case EAST:
+            printf("East");
+            break;
+        case SOUTH:
+            printf("South");
+            break;
+        case WEST:
+            printf("West");
+            break;
+    }
+}
+
+
+unsigned char roll_dice()
+{
+    return (unsigned char) (rand() % 6 + 1);
 }

@@ -64,9 +64,10 @@ typedef struct
 {
     cell* start;
     cell* location;
+    DIRECTION start_direction;
     DIRECTION current_direction;
     int movement_points;
-    char direction_dice;
+    unsigned char direction_dice;
     char name;
 } player;
 
