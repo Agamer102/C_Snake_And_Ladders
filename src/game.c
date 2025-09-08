@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include "calc.h"
 #include "game.h"
 
 const cell empty_cell =
@@ -35,6 +36,8 @@ void game()
     generate_map();
     initialize_players();
     get_file_inputs();
+    assign_movement_points();
+    printf("Mov: %i\n", maze[0][4][7]->movement_point_operand);
     do
     {
         turn(players + game_ticks % 3);
