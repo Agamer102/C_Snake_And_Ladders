@@ -37,6 +37,7 @@ void game()
     initialize_players();
     get_file_inputs();
     assign_movement_points();
+    print_maze();
     printf("Mov: %i\n", maze[0][4][7]->movement_point_operand);
     do
     {
@@ -275,6 +276,53 @@ void print_direction(DIRECTION dir)
         case WEST:
             printf("West");
             break;
+    }
+}
+
+
+void print_maze()
+{
+    for (int floor = 0; floor < FLOORS; floor++)
+    {
+        printf("Floor %i\n\n", floor);
+        for (int width = 0; width < WIDTH; width++)
+        {
+            for (int length = 0; length < LENGTH; length++)
+            {
+                cell* current_cell = maze[floor][width][length];
+                if (current_cell == NULL)
+                {
+                    printf("   ");
+                    continue;
+                }
+
+                switch (current_cell->type)
+                {
+                    case GAME:
+                        printf(COLOR_GAME " @ " RESET);
+                        break;
+                    case START:
+                        printf(COLOR_START " @ " RESET);
+                        break;
+                    case WALL:
+                        printf(COLOR_WALL " W " RESET);
+                        break;
+                    case POLE:
+                        printf(COLOR_POLE " P " RESET);
+                        break;
+                    case STAIR:
+                        printf(COLOR_STAIR " S " RESET);
+                        break;
+                    case FLAG:
+                        printf(COLOR_FLAG " F " RESET);
+                        break;
+                    case BAWANA:
+                        printf(COLOR_BAWANA " B " RESET);
+                        break;
+                }
+            }
+            printf("\n");
+        }
     }
 }
 
