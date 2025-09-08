@@ -19,7 +19,9 @@ const cell empty_cell =
         NULL,
         NULL,
         NULL
-    }
+    },
+    -1,
+    -1
 };
 
 cell* maze[FLOORS][WIDTH][LENGTH] = {NULL};
@@ -39,7 +41,6 @@ void game()
     assign_movement_points();
     assign_bawana_cells();
     print_maze();
-    printf("Mov: %i\n", maze[0][4][7]->movement_point_operand);
     do
     {
         turn(players + game_ticks % 3);
@@ -76,7 +77,7 @@ void turn(player* current_player)
         return;
     }
     //BLOCKED TEMPORARILY
-    return;
+    //return;
 
     //standard movement section
 
@@ -87,8 +88,9 @@ void turn(player* current_player)
     if (current_player->direction_dice == 3)
     {
         DIRECTION movement_dice = roll_dice();
-        if (movement_dice != FORCED || movement_dice != DIRECTION_COUNT)
+        if (movement_dice != SECOND && movement_dice != DIRECTION_COUNT)
         {
+            //printf("\n\n %i \n\n", movement_dice);
             current_player->current_direction = movement_dice;
             printf(" and ");
             print_direction(movement_dice);
@@ -101,15 +103,210 @@ void turn(player* current_player)
     //modulos to prevent value from exploding
     current_player->direction_dice = (current_player->direction_dice + 1) % 4;
 
+    DIRECTION dir = current_player->current_direction;
+    cell* move = current_player->location;
 
+    MOVEMENT status = SUCCESS;
+    for (int i = dice; i > 0; i--)
+    {
+        if (status != SUCCESS)
+        {
+            break;
+        }
+        switch (move->type)
+        {
+            case GAME:
+                move = move->neighbours[dir];
+                if (move == NULL)
+                {
+                    status = HIT_WALL;
+                }
+                break;
+            case POLE:
+                //only true on pole activation cell
+                move = follow_the_path(move);
+                if (move == NULL)
+                {
+                    status = STAIR_POLE_LOOP;
+                }
+                break;
+            case STAIR:
+                //don't take stair already taken on first dice roll
+                if (i == dice && move->neighbours[FORCED] == current_player->from)
+                {
+                    if (move->neighbours[SECOND] == NULL)
+                    {
+                        move = move->neighbours[dir];
+                        if (move == NULL)
+                        {
+                            status = HIT_WALL;
+                        }
+                    }
+                    move = follow_the_path(move->neighbours[SECOND]);
+                }
+                move = follow_the_path(move);
+                if (move == NULL)
+                {
+                    status = STAIR_POLE_LOOP;
+                }
+                break;
+            case START:
+                //edge case, check whether fall to start or barrier
+                if (move->floor == 0)
+                {
+                    status = HIT_WALL;
+                }
+                else
+                {
+                    //fall to start
+                    move = current_player->start;
+                    status = FELL_TO_START;
+                    return;
+                }
+                break;
+            case BAWANA:
+                status = FELL_TO_BAWANA;
+                break;
+            case FLAG:
+                //TODO: flag capture 
+                flag_found(current_player);
+                break;
+            case WALL:
+                status = HIT_WALL;
+        }
+    }
+    
+    switch (status)
+    {
+        case SUCCESS:
+            //we can now move the player
+            current_player->from = current_player->location;
+            current_player->location = move;
+            printf(" and moves ");
+            if(current_player->direction_dice == 0)
+            {
+                print_direction(current_player->current_direction);
+                printf(" by ");
+            }
+            printf("%i cells and is now at ", dice);
+            print_cell(move);
+            printf(".\n");
+            break;
+        case HIT_WALL:
+            //hit wall special message
+            printf(" and cannot move in the ");
+            print_direction(current_player->current_direction);
+            printf(". Player remains at ");
+            print_cell(current_player->location);
+            printf("\n");
+            break;
+        //TODO: Fell to start and Fell to Bawana case, temp fix here
+        default:
+            current_player->location = current_player->start;
+            break;
+    }
+    
+}
+
+/*
+Follows all stairs and poles from given cell, and returns
+final cell*. Returns NULL if loop is detected
+*/
+cell* follow_the_path(cell* start)
+{
+    cell* visited[GAME_CELL_CAP];
+    int n = 0;
+
+    cell* next = start;
+    while (1)
+    {
+        //check for loop condition 
+        for (int i = 0; i < n; i++)
+        {
+            if (next == visited[i])
+            {
+                return NULL;
+            }
+        }
+        visited[n++] = next;
+
+        //move to the next node
+        
+        //check if we are now no longer in POLE or STAIR loop
+        if (next->type != POLE && next->type != STAIR)
+        {
+            return next;
+        }
+
+        cell *forced = next->neighbours[FORCED];
+        cell* second = next->neighbours[SECOND];
+
+        //pole case
+        if (next->type == POLE)
+        {
+            //forced cannot be NULL here, by definition
+            next = forced;
+            continue;
+        }
+
+        //only remaining case is the stair case
+
+        //check for no valid stairs case
+        if (forced == NULL && second == NULL)
+        {
+            return next;
+        }
+
+        //if we haven't visited forced, visit it
+        int v = 0;
+        for (int i = 0; i < n; i++)
+        {
+            if (forced == visited[i])
+            {
+                v = 1;
+            }
+        }
+        if (v == 0)
+        {
+            next = forced;
+            continue;
+        }
+        
+        v = 0;
+        //now check second
+        for (int i = 0; i < n; i++)
+        {
+            if (second == visited[i])
+            {
+                v = 1;
+            }
+        }
+        if (v == 0)
+        {
+            next = second;
+            continue;
+        }
+
+        //if we made it to this point, we have also detected a loop
+        return NULL;
+    }
+}
+
+
+void flag_found(player* winner)
+{
+    printf("%c finds the flag and wins !", winner->name);
+    free_map();
+    free(stairs);
+    exit(0);
 }
 
 
 void initialize_players()
 {
-    players[0] = (player){maze[0][6][12], maze[0][6][12], NORTH, NORTH, 100, 0, 'A'};
-    players[1] = (player){maze[0][9][8], maze[0][9][8], WEST, WEST, 100, 0, 'B'};
-    players[2] = (player){maze[0][9][16], maze[0][9][16], EAST, EAST, 100, 0, 'C'};
+    players[0] = (player){maze[0][6][12], maze[0][6][12], maze[0][6][12], NORTH, NORTH, 100, 0, 'A'};
+    players[1] = (player){maze[0][9][8], maze[0][9][8], maze[0][6][12], WEST, WEST, 100, 0, 'B'};
+    players[2] = (player){maze[0][9][16], maze[0][9][16], maze[0][6][12], EAST, EAST, 100, 0, 'C'};
 
     //handle special case for maze starting cells
     maze[0][6][12]->neighbours[FORCED] = maze[0][5][12];
@@ -196,7 +393,9 @@ void fix_cell_neighbour(cell* current_cell)
         //check if cell is out of bounds
         if (
             !cell_in_maze_bounds(current_cell->floor, neighbour_width, neighbour_length) ||
-            current_cell->type == START
+            current_cell->type == START ||
+            current_cell->type == WALL ||
+            current_cell->type == BAWANA
         )
         {
             continue;

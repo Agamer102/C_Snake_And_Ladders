@@ -49,6 +49,15 @@ typedef enum
     BOTTOM_TO_TOP
 } STAIR_DIRECTION;
 
+typedef enum
+{
+    SUCCESS,
+    HIT_WALL,
+    STAIR_POLE_LOOP,
+    FELL_TO_START,
+    FELL_TO_BAWANA
+} MOVEMENT;
+
 typedef struct cell
 {
     unsigned char floor;
@@ -58,12 +67,25 @@ typedef struct cell
     CELL_OPERATION movement_point_operation;
     int movement_point_operand;
     struct cell* neighbours[DIRECTION_COUNT];
+    int n1;
+    int n2;
 } cell;
+//n1, n2 is set by default to -1 and are used
+/*
+GAME: -1
+STAIR: stair#1, stair#2
+POLE: -1
+START: -1
+WALL: -1
+BAWANA: 
+*/
+
 
 typedef struct
 {
     cell* start;
     cell* location;
+    cell* from;
     DIRECTION start_direction;
     DIRECTION current_direction;
     int movement_points;

@@ -16,6 +16,8 @@
 void game();
 void generate_map();
 void turn(player* current_player);
+cell* follow_the_path(cell* start);
+void flag_found(player* winner);
 void fill_section(
     int floor, 
     int width_start, 

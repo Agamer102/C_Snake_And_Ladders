@@ -104,7 +104,7 @@ stair* add_valid_stairs()
     }
 
     char buff[100];
-    stair stair_list[500];
+    stair stair_list[STAIR_CAP];
     while (fgets(buff, sizeof(buff), f) != NULL)
     {
         unsigned int start_floor, start_width, start_length;
@@ -161,20 +161,24 @@ stair* add_valid_stairs()
         if (start_cell->neighbours[FORCED] == NULL)
         {
             start_cell->neighbours[FORCED] = end_cell;
+            start_cell->n1 = stair_count;
         }
         else
         {
             start_cell->neighbours[SECOND] = end_cell;
+            start_cell->n2 = stair_count;
         }
 
         // add the stair to ending cell
         if (end_cell->neighbours[FORCED] == NULL)
         {
             end_cell->neighbours[FORCED] = start_cell;
+            end_cell->n1 = stair_count;
         }
         else
         {
             end_cell->neighbours[FORCED] = start_cell;
+            end_cell->n2 = stair_count;
         }
 
         // fix cell types
