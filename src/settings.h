@@ -7,6 +7,9 @@
 #define NAME_LENGTH 11
 #define NUMBER_OF_PLAYERS 3
 #define GAME_CELL_CAP 500
+#define BAWANA_START_WIDTH 7
+#define BAWANA_START_LENGTH 21
+#define BAWANA_CELL_COUNT 12
 
 //movement point operation, distribution constants
 //DIST_G -> distribution game cells

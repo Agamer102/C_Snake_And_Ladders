@@ -45,6 +45,29 @@ void assign_movement_points()
     assign_to_range_array(game_cells, ADD, -4, -1, start, end);
 }
 
+void assign_bawana_cells()
+{
+    cell *bawana[BAWANA_CELL_COUNT];
+    int index = 0;
+    for (int width = BAWANA_START_WIDTH; width < WIDTH; width++)
+    {
+        for (int length = BAWANA_START_LENGTH; length < LENGTH; length++)
+        {
+            bawana[index++] = maze[0][width][length];
+        }
+    }
+
+    fisher_yates(bawana, BAWANA_CELL_COUNT);
+    
+    //food poisoning to happy
+    assign_to_range_array(bawana, FOOD_POISONING, 0, 0, 0, 2);
+    assign_to_range_array(bawana, DISORIENTED, 50, 50, 2, 4);
+    assign_to_range_array(bawana, TRIGGERED, 50, 50, 4, 6);
+    assign_to_range_array(bawana, HAPPY, 200, 200, 6, 8);
+    //movement point bonus cells
+    assign_to_range_array(bawana, ADD, 10, 100, 8, BAWANA_CELL_COUNT);
+}
+
 
 void is_game_cell(cell* current_cell)
 {

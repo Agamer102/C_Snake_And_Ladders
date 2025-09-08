@@ -4,6 +4,7 @@
 #include "types.h"
 
 void assign_movement_points();
+void assign_bawana_cells();
 void is_game_cell(cell* current_cell);
 void get_game_block_array();
 void fisher_yates(cell** array, int length);

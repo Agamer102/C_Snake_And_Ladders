@@ -56,7 +56,7 @@ typedef struct cell
     unsigned char length;
     CELL_TYPE type;
     CELL_OPERATION movement_point_operation;
-    char movement_point_operand;
+    int movement_point_operand;
     struct cell* neighbours[DIRECTION_COUNT];
 } cell;
 

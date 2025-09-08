@@ -37,6 +37,7 @@ void game()
     initialize_players();
     get_file_inputs();
     assign_movement_points();
+    assign_bawana_cells();
     print_maze();
     printf("Mov: %i\n", maze[0][4][7]->movement_point_operand);
     do
@@ -299,7 +300,7 @@ void print_maze()
                 switch (current_cell->type)
                 {
                     case GAME:
-                        printf(COLOR_GAME " @ " RESET);
+                        printf(COLOR_GAME " %i " RESET, current_cell->movement_point_operand);
                         break;
                     case START:
                         printf(COLOR_START " @ " RESET);
@@ -317,7 +318,7 @@ void print_maze()
                         printf(COLOR_FLAG " F " RESET);
                         break;
                     case BAWANA:
-                        printf(COLOR_BAWANA " B " RESET);
+                        printf(COLOR_BAWANA " %i " RESET, current_cell->movement_point_operand);
                         break;
                 }
             }
