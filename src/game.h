@@ -18,6 +18,8 @@ void generate_map();
 void turn(player* current_player);
 cell* follow_the_path(cell* start);
 void flag_found(player* winner);
+void bawana_entrance_logic(player* current_player);
+void place_at_bawana_entrance(player* current_player);
 void fill_section(
     int floor, 
     int width_start, 
@@ -34,6 +36,7 @@ void free_map();
 void iterate_map(void (*function_to_call)(void*));
 void print_cell(cell *to_print);
 void print_direction(DIRECTION dir);
+void print_bawana_cell(CELL_OPERATION op);
 void print_maze();
 unsigned char roll_dice();
 #endif

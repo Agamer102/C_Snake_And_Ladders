@@ -39,7 +39,8 @@ typedef enum
     FOOD_POISONING,
     DISORIENTED,
     TRIGGERED,
-    HAPPY
+    HAPPY,
+    OPERATION_COUNT
 } CELL_OPERATION;
 
 typedef enum
@@ -55,7 +56,8 @@ typedef enum
     HIT_WALL,
     STAIR_POLE_LOOP,
     FELL_TO_START,
-    FELL_TO_BAWANA
+    FELL_TO_BAWANA,
+    RAN_OUT_OF_MOVEMENT_POINTS
 } MOVEMENT;
 
 typedef struct cell
@@ -65,7 +67,7 @@ typedef struct cell
     unsigned char length;
     CELL_TYPE type;
     CELL_OPERATION movement_point_operation;
-    int movement_point_operand;
+    char movement_point_operand;
     struct cell* neighbours[DIRECTION_COUNT];
     int n1;
     int n2;
@@ -88,7 +90,10 @@ typedef struct
     cell* from;
     DIRECTION start_direction;
     DIRECTION current_direction;
-    int movement_points;
+    CELL_OPERATION status_effect;
+    unsigned char status_duration;
+    unsigned int status_factor;
+    unsigned int movement_points;
     unsigned char direction_dice;
     char name;
 } player;

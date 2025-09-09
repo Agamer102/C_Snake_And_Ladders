@@ -47,7 +47,6 @@ void assign_movement_points()
 
 void assign_bawana_cells()
 {
-    cell *bawana[BAWANA_CELL_COUNT];
     int index = 0;
     for (int width = BAWANA_START_WIDTH; width < WIDTH; width++)
     {
@@ -60,10 +59,11 @@ void assign_bawana_cells()
     fisher_yates(bawana, BAWANA_CELL_COUNT);
     
     //food poisoning to happy
+    //NOTE: movement point operand not assigned here for these
     assign_to_range_array(bawana, FOOD_POISONING, 0, 0, 0, 2);
-    assign_to_range_array(bawana, DISORIENTED, 50, 50, 2, 4);
-    assign_to_range_array(bawana, TRIGGERED, 50, 50, 4, 6);
-    assign_to_range_array(bawana, HAPPY, 200, 200, 6, 8);
+    assign_to_range_array(bawana, DISORIENTED, 0, 0, 2, 4);
+    assign_to_range_array(bawana, TRIGGERED, 0, 0, 4, 6);
+    assign_to_range_array(bawana, HAPPY, 0, 0, 6, 8);
     //movement point bonus cells
     assign_to_range_array(bawana, ADD, 10, 100, 8, BAWANA_CELL_COUNT);
 }

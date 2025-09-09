@@ -8,9 +8,13 @@
 #define NUMBER_OF_PLAYERS 3
 #define GAME_CELL_CAP 500
 #define STAIR_CAP 1000
+#define START_MOVEMENT_POINTS 100
 #define BAWANA_START_WIDTH 7
 #define BAWANA_START_LENGTH 21
 #define BAWANA_CELL_COUNT 12
+#define TRIGGER_FACTOR 2
+#define WALL_HIT_DICE_COST 2
+
 
 //movement point operation, distribution constants
 //DIST_G -> distribution game cells

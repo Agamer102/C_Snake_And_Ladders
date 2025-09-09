@@ -18,5 +18,6 @@ void assign_to_range_array(
 );
 
 extern cell* maze[FLOORS][WIDTH][LENGTH];
+extern cell* bawana[BAWANA_CELL_COUNT];
 
 #endif
