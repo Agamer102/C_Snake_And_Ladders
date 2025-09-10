@@ -89,7 +89,6 @@ void turn(player* current_player)
         //default movement
         case ADD:
         case MUL:
-        case TRIGGERED:
             dice = roll_dice();
             direction_dice = roll_direction_dice_for(current_player);
             break;
@@ -97,6 +96,10 @@ void turn(player* current_player)
             dice = roll_dice();
             //roll a new random direction
             direction_dice = rand() % 4 + NORTH;
+            break;
+        case TRIGGERED:
+            dice = roll_dice() * current_player->status_factor; //handle it here
+            direction_dice = roll_direction_dice_for(current_player);
             break;
     }
 
