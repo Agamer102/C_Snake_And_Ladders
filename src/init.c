@@ -14,6 +14,8 @@ void init()
     get_distances_to_flag();
     assign_movement_points();
     assign_bawana_cells();
+    printf("TYPE START: %i\n", start_link_cell->type);
+    printf("TYPE BAWANA: %i\n", bawana_link_cell->type);
     print_maze();
 }
 
@@ -53,8 +55,25 @@ void initialize_players()
 void generate_map()
 {
     //ground floor
-    fill_section(0, 0, 0, 9, 24, GAME);
-    fill_section(0, 6, 8, 9, 16, START);
+    //more precise fill is needed now
+    fill_section(0, 0, 0, 5, 24, GAME);
+    fill_section(0, 6, 0, 9, 7, GAME);
+    fill_section(0, 6, 17, 9, 19, GAME);
+    
+    //start section no longer exists, except for special player cells
+    fill_section(0, 9, 8, 9, 8, START);
+    fill_section(0, 6, 12, 6, 12, START);
+    fill_section(0, 9, 16, 9, 16, START);
+
+    //intialize a start-link, all stairs and poles that fall
+    //to start now link to this
+    fill_section(0, START_LINK_WIDTH, START_LINK_LENGTH, START_LINK_WIDTH, START_LINK_LENGTH, LINK_START);
+    start_link_cell = maze[0][START_LINK_WIDTH][START_LINK_LENGTH];
+
+    //similarly a bawana link, that represents a fall to bawana
+    fill_section(0, BAWANA_LINK_WIDTH, BAWANA_LINK_LENGTH, BAWANA_LINK_WIDTH, BAWANA_LINK_LENGTH, LINK_BAWANA);
+    bawana_link_cell = maze[0][BAWANA_LINK_WIDTH][BAWANA_LINK_LENGTH];
+
     fill_section(0, 6, 20, 9, 20, WALL);
     fill_section(0, 6, 21, 6, 24, WALL);
     fill_section(0, 7, 21, 9, 24, BAWANA);
@@ -89,6 +108,12 @@ void get_distances_to_flag()
     bfs(flag);
     printf("BFS OVER");
     //undo_reverse_poles();
+
+    //here now, we can apply cost of bawana start to bawana
+    bawana_link_cell->distance_to_flag = bawana_entrance->distance_to_flag;
+
+    //for start link, it differs by player usually
+    //this should be handled more dynamically
 }
 
 

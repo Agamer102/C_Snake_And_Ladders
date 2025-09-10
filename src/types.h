@@ -30,6 +30,8 @@ typedef enum
     STAIR,
     FLAG,
     BAWANA,
+    LINK_START,
+    LINK_BAWANA,
     DEAD
 } CELL_TYPE;
 

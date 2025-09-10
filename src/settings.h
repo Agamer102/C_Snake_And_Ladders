@@ -15,6 +15,11 @@
 #define TRIGGER_FACTOR 2
 #define WALL_HIT_DICE_COST 2
 #define DEQUE_CAP 10000
+#define START_LINK_WIDTH 9
+#define START_LINK_LENGTH 12
+#define BAWANA_LINK_WIDTH 9
+#define BAWANA_LINK_LENGTH 13
+#define BAWANA_NAME_LENGTH 30
 
 //colors to be used mainly for visualization only
 #define COLOR_GAME "\x1B[37m" //white

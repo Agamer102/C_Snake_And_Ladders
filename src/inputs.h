@@ -13,6 +13,8 @@ extern stair* stairs;
 extern cell* flag;
 extern pole* poles;
 extern int pole_count;
+extern cell* start_link_cell;
+extern cell* bawana_link_cell;
 
 void get_file_inputs();
 FILE* open_file(char* path);

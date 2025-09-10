@@ -4,6 +4,7 @@
 #include "types.h"
 
 int cell_in_maze_bounds(int floor, int width, int length);
+int cell_in_start_area(int floor, int width, int length);
 void free_map();
 void iterate_map(void (*function_to_call)(void*));
 void fill_section(
@@ -16,10 +17,6 @@ void fill_section(
 );
 void fix_neighbours();
 void fix_cell_neighbour(cell* current_cell);
-void print_cell(cell *to_print);
-void print_direction(DIRECTION dir);
-void print_bawana_cell(CELL_OPERATION op);
-void print_maze();
 void fisher_yates(cell** array, int length);
 void assign_to_range_array(
     cell** array, 

@@ -63,12 +63,19 @@ Rules for object placement:
         Pole -> NOT WALL
         Wall -> GAME 
         Flag -> GAME
+
+NOTE: SPECIAL returns LINK_START or LINK_BAWANA if in those areas
 */
 int can_place_object(int floor, int width, int length, CELL_TYPE type)
 {
     if (!cell_in_maze_bounds(floor, width, length))
     {
         return 0;
+    }
+    //start cell special case
+    if (cell_in_start_area(floor, width, length))
+    {
+        return LINK_START;
     }
     //puts("Cell in bounds");
     cell* current_cell = maze[floor][width][length];
@@ -79,6 +86,10 @@ int can_place_object(int floor, int width, int length, CELL_TYPE type)
     }
     //puts("Cell not NULL");
     CELL_TYPE maze_cell_type = current_cell->type;
+    if (maze_cell_type == BAWANA)
+    {
+        return LINK_BAWANA;
+    }
     switch (type)
     {
         case STAIR:
@@ -130,17 +141,35 @@ void add_valid_stairs()
             continue;
         }
 
+        int start_return_value = can_place_object(start_floor, start_width, start_length, STAIR);
+        int end_return_value = can_place_object(end_floor, end_width, end_length, STAIR);
+
         // check for invalid stairs, by out of bounds
-        if (
-            !can_place_object(start_floor, start_width, start_length, STAIR) ||
-            !can_place_object(end_floor, end_width, end_length, STAIR)
-        )
+        if (!start_return_value || !end_return_value)
         {
             printf("Invalid stair %s\n", buff);
             continue;        
         }
-        cell* start_cell = maze[start_floor][start_width][start_length];
-        cell* end_cell = maze[end_floor][end_width][end_length];
+        cell* start_cell; //= maze[start_floor][start_width][start_length];
+        cell* end_cell; //= maze[end_floor][end_width][end_length];
+
+        //process links now
+        //only need to check lower floor, as that's the only place with bawana and start
+        if (start_return_value == LINK_START)
+        {
+            start_cell = start_link_cell;
+        }
+        else if (start_return_value == LINK_BAWANA)
+        {
+            start_cell = bawana_link_cell;
+        }
+        else
+        {
+            start_cell = maze[start_floor][start_width][start_length];
+        }
+
+        end_cell = maze[end_floor][end_width][end_length];
+
 
         // check for 2 staircases case
         if (
@@ -182,7 +211,11 @@ void add_valid_stairs()
         }
 
         // fix cell types
-        start_cell->type = STAIR;
+        //edge case 
+        if (start_return_value == 1)
+        {
+            start_cell->type = STAIR;
+        }
         end_cell->type = STAIR;
 
         // add stair to stair list
@@ -255,10 +288,10 @@ void add_valid_poles()
         int top_floor = MAX(start_floor, end_floor);
         int bottom_floor = MIN(start_floor, end_floor);
 
-        if (
-            !can_place_object(start_floor, width, length, POLE) ||
-            !can_place_object(end_floor, width, length, POLE)
-        )
+        int top_return_value = can_place_object(start_floor, width, length, POLE);
+        int bottom_return_value = can_place_object(end_floor, width, length, POLE);
+
+        if (!top_return_value || !bottom_return_value)
         {
             //handle edge case where pole defined from 
             //illegal location, to intersect a legal location
@@ -275,8 +308,24 @@ void add_valid_poles()
         }
         pole to_add;
 
-        cell* top_cell = maze[top_floor][width][length];
-        cell* bottom_cell = maze[bottom_floor][width][length];
+        cell* top_cell; //= maze[top_floor][width][length];
+        cell* bottom_cell; //= maze[bottom_floor][width][length];
+
+        //process links
+        //NOTE: only bottom cell can be bawana or start
+        if (bottom_return_value == LINK_START)
+        {
+            bottom_cell = start_link_cell;
+        }
+        else if (bottom_return_value == LINK_BAWANA)
+        {
+            bottom_cell = start_link_cell;
+        }
+        else
+        {
+            bottom_cell = maze[bottom_floor][width][length];
+        }
+        top_cell = maze[top_floor][width][length];
 
         to_add.bottom_cell = bottom_cell;
         to_add.top_cell = top_cell;

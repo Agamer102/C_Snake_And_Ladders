@@ -5,6 +5,7 @@
 #include <time.h>
 #include "helpers.h"
 #include "inputs.h"
+#include "outputs.h"
 #include "types.h"
 #include "settings.h"
 

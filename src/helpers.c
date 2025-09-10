@@ -33,6 +33,15 @@ int cell_in_maze_bounds(int floor, int width, int length)
 }
 
 
+int cell_in_start_area(int floor, int width, int length)
+{
+    if (floor != 0) return 0;
+    if (width < 6 || width >= WIDTH) return 0;
+    if (length < 8 || length > 16) return 0;
+    return 1;
+}
+
+
 void free_map()
 {
     iterate_map(&free);
@@ -142,110 +151,6 @@ void fix_cell_neighbour(cell* current_cell)
 }
 
 
-// prints a given cell in expected output to std output
-void print_cell(cell *to_print)
-{
-    //printf("Trying to print cell %p\n", to_print);
-    printf(
-        NAME_FORMAT, 
-        (unsigned int)to_print->floor, 
-        (unsigned int)to_print->width, 
-        (unsigned int)to_print->length
-    );
-}
-
-
-//prints a given direction
-void print_direction(DIRECTION dir)
-{
-    switch (dir)
-    {
-        case NORTH:
-            printf("North direction");
-            break;
-        case EAST:
-            printf("East direction");
-            break;
-        case SOUTH:
-            printf("South direction");
-            break;
-        case WEST:
-            printf("West direction");
-            break;
-    }
-}
-
-
-void print_bawana_cell(CELL_OPERATION op)
-{
-    switch (op)
-    {
-        case ADD:
-            printf("Movement Point Cell");
-            break;
-        case FOOD_POISONING:
-            printf("Food Poisoning Cell");
-            break;
-        case DISORIENTED:
-            printf("Disoriented Cell");
-            break;
-        case TRIGGERED:
-            printf("Triggered Cell");
-            break;
-        case HAPPY:
-            printf("Happy Cell");
-            break;
-    }
-}
-
-
-void print_maze()
-{
-    for (int floor = 0; floor < FLOORS; floor++)
-    {
-        printf("Floor %i\n\n", floor);
-        for (int width = 0; width < WIDTH; width++)
-        {
-            for (int length = 0; length < LENGTH; length++)
-            {
-                cell* current_cell = maze[floor][width][length];
-                if (current_cell == NULL)
-                {
-                    printf("   ");
-                    continue;
-                }
-
-                switch (current_cell->type)
-                {
-                    case GAME:
-                        printf(COLOR_GAME " %i " RESET, current_cell->distance_to_flag);
-                        break;
-                    case START:
-                        printf(COLOR_START " @ " RESET);
-                        break;
-                    case WALL:
-                        printf(COLOR_WALL " W " RESET);
-                        break;
-                    case POLE:
-                        printf(COLOR_POLE " %i " RESET, current_cell->distance_to_flag);
-                        break;
-                    case STAIR:
-                        printf(COLOR_STAIR " %i " RESET, current_cell->distance_to_flag);
-                        break;
-                    case FLAG:
-                        printf(COLOR_FLAG " %i " RESET, current_cell->distance_to_flag);
-                        break;
-                    case BAWANA:
-                        printf(COLOR_BAWANA " %i " RESET, current_cell->distance_to_flag);
-                        break;
-                }
-            }
-            printf("\n");
-        }
-    }
-}
-
-
 //algorithm to randomize the order of given cell
 //guarentees random permutation of array
 void fisher_yates(cell** array, int length)
@@ -342,3 +247,4 @@ void bfs(cell* flag)
         }
     }
 }
+
