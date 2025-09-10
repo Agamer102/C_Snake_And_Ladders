@@ -29,7 +29,8 @@ typedef enum
     POLE,
     STAIR,
     FLAG,
-    BAWANA
+    BAWANA,
+    DEAD
 } CELL_TYPE;
 
 typedef enum
@@ -71,6 +72,7 @@ typedef struct cell
     struct cell* neighbours[DIRECTION_COUNT];
     int n1;
     int n2;
+    int distance_to_flag;
 } cell;
 //n1, n2 is set by default to -1 and are used
 /*
@@ -104,5 +106,19 @@ typedef struct
     cell* end_cell;
     STAIR_DIRECTION direction;
 } stair;
+
+typedef struct
+{
+    cell* top_cell;
+    cell* middle_cell;
+    cell* bottom_cell;
+} pole;
+
+typedef struct 
+{
+    cell* deque[DEQUE_CAP];
+    int front, back;
+} deque;
+
 
 #endif

@@ -12,7 +12,7 @@ void get_file_inputs()
     seed_rand_function();
     add_valid_walls();
     add_valid_poles();
-    stairs = add_valid_stairs();
+    add_valid_stairs();
 }
 
 //opens a requested file in inputs folder, 
@@ -94,13 +94,13 @@ int can_place_object(int floor, int width, int length, CELL_TYPE type)
 
 
 //returns a malloced list of stairs, if no stairs returns NULL
-stair* add_valid_stairs()
+void add_valid_stairs()
 {
     FILE *f = open_file(STAIRS_TXT);
     if (f == NULL)
     {
         puts("No stairs will be added.");
-        return NULL;
+        return;
     }
 
     char buff[100];
@@ -195,11 +195,11 @@ stair* add_valid_stairs()
     if (stair_count < 1)
     {
         puts("No stairs added to game.");
-        return NULL;
+        return;
     }
 
     // malloc the stair list
-    stair* stairs = malloc(stair_count * sizeof(stair));
+    stairs = (stair*)malloc(stair_count * sizeof(stair));
 
     //handle malloc fail
     if (stairs == NULL)
@@ -214,7 +214,6 @@ stair* add_valid_stairs()
     {
         stairs[stair_index] = stair_list[stair_index];
     }
-    return stairs;
 }
 
 
@@ -228,6 +227,7 @@ void add_valid_poles()
     }
 
     char buff[100];
+    pole pole_list[GAME_CELL_CAP];
     while (fgets(buff, sizeof(buff), f) != NULL)
     {
         unsigned int start_floor, end_floor, width, length;
@@ -273,10 +273,13 @@ void add_valid_poles()
                 continue;
             }
         }
+        pole to_add;
 
         cell* top_cell = maze[top_floor][width][length];
         cell* bottom_cell = maze[bottom_floor][width][length];
 
+        to_add.bottom_cell = bottom_cell;
+        to_add.top_cell = top_cell;
         //if middle cell exists, add that cell as a separete pole
         if (top_floor - bottom_floor == 2 && can_place_object(1, width, length, POLE))
         {
@@ -284,12 +287,41 @@ void add_valid_poles()
             middle_cell->type = POLE;
             middle_cell->neighbours[FORCED] = bottom_cell;
             middle_cell->neighbours[SECOND] = NULL;
+            to_add.middle_cell = middle_cell;
         }
         top_cell->type = POLE;
         top_cell->neighbours[FORCED] = bottom_cell;
         top_cell->neighbours[SECOND] = NULL;
+
+        pole_list[pole_count++] = to_add;
     }
     fclose(f);
+
+    // handle no poles edge case
+    if (pole_count < 1)
+    {
+        puts("No poles added to game.");
+        return;
+    }
+
+    // malloc the pole list
+    poles = (pole*)malloc(pole_count * sizeof(pole));
+
+    //handle malloc fail
+    if (poles == NULL)
+    {
+        puts("Failed to alloc poles.");
+        puts("Quitting game");
+        free_map();
+        free(stairs);
+        exit(-1);
+    }
+
+    for (int pole_index = 0; pole_index < pole_count; pole_index++)
+    {
+        poles[pole_index] = pole_list[pole_index];
+    }
+
 }
 
 
@@ -416,7 +448,7 @@ void add_flag()
             free_map();
             exit(-1);
         }
-        cell* flag = maze[floor][width][length];
+        flag = maze[floor][width][length];
         flag->type = FLAG;
     }
     else

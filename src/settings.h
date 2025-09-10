@@ -14,7 +14,17 @@
 #define BAWANA_CELL_COUNT 12
 #define TRIGGER_FACTOR 2
 #define WALL_HIT_DICE_COST 2
+#define DEQUE_CAP 10000
 
+//colors to be used mainly for visualization only
+#define COLOR_GAME "\x1B[37m" //white
+#define COLOR_STAIR "\x1B[31m" //red
+#define COLOR_POLE "\x1B[33m" //yellow
+#define COLOR_WALL "\x1B[34m" //blue
+#define COLOR_BAWANA "\x1B[32m" //green
+#define COLOR_START "\x1B[35m" //magenta
+#define COLOR_FLAG   "\x1B[36m" //cyan
+#define RESET "\x1B[0m"
 
 //movement point operation, distribution constants
 //DIST_G -> distribution game cells
