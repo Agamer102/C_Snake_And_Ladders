@@ -9,6 +9,7 @@
 #include "settings.h"
 
 void play_game();
+void randomize_stair_direction();
 void turn(player* current_player);
 void food_poisoning_logic(player* current_player);
 void handle_effect_duration(player* current_player);

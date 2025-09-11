@@ -6,16 +6,18 @@ cell* game_cells[GAME_CELL_CAP];
 
 void init()
 {
-    //seed_rand();
+    seed_rand_function();
     generate_map();
     initialize_players();
     get_file_inputs();
     fix_neighbours();
+    assign_bfs_neighbours();
     get_distances_to_flag();
+    print_stairs();
     assign_movement_points();
     assign_bawana_cells();
-    printf("TYPE START: %i\n", start_link_cell->type);
-    printf("TYPE BAWANA: %i\n", bawana_link_cell->type);
+    //printf("TYPE START: %i\n", start_link_cell->type);
+    //printf("TYPE BAWANA: %i\n", bawana_link_cell->type);
     print_maze();
 }
 
@@ -100,13 +102,15 @@ void get_distances_to_flag()
 {
     //we need to now reverse the edges of each cell in the map
     //WARNING: do not call twice
-    //NEW IMPLEMENTATION makes this function redundant
+
     //reverse_poles();
     //execute pathfinding
+
     printf("TRYING BFS");
     print_maze();
     bfs(flag);
     printf("BFS OVER");
+
     //undo_reverse_poles();
 
     //here now, we can apply cost of bawana start to bawana

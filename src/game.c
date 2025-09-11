@@ -44,14 +44,56 @@ void play_game()
     do
     {
         turn(players + (game_ticks % 3));
+        if (game_ticks % STAIR_DIRECTION_CHANGE_TURNS == STAIR_DIRECTION_CHANGE_TURNS - 1) 
+        {
+            reset_flag_distances();
+            clear_bfs_neighbours();
+            randomize_stair_direction();
+            assign_bfs_neighbours();
+            bfs(flag);
+            print_maze();
+            print_stairs();
+        }
     } while (++game_ticks);
     
 }
 
 
+void randomize_stair_direction()
+{
+    if (stair_count < 1)
+    {
+        return;
+    }
+
+    for (int i = 0; i < stair_count; i++)
+    {
+        stairs[i].direction = rand() % 3;
+        cell* start = stairs[i].start_cell;
+        cell* end = stairs[i].end_cell;
+        switch (stairs[i].direction)
+        {
+            case BIDIRECTIONAL:
+                //note because of validation, this cannot fail
+                assign_to_forced_then_second(start, end, i);
+                assign_to_forced_then_second(end, start, i);
+                break;
+            case TOP_TO_BOTTOM:
+                assign_to_forced_then_second(start, end, i);
+                remove_stair_from_cell(end, start);
+                break;
+            case BOTTOM_TO_TOP:
+                remove_stair_from_cell(start, end);
+                assign_to_forced_then_second(end, start, i);
+                break;
+        }
+    }
+}
+
+
 void turn(player* current_player)
 {
-    print_turn(current_player);
+    //print_turn(current_player);
     unsigned char dice = 0;
     DIRECTION direction_dice = 0;
 

@@ -1,5 +1,6 @@
 #ifndef HELPERS_H
 #define HELPERS_H
+#include "outputs.h"
 #include "settings.h"
 #include "types.h"
 
@@ -27,6 +28,14 @@ void assign_to_range_array(
     int end
 );
 void bfs(cell* flag);
+char assign_to_forced_then_second(cell* assignee, cell* assignor, int index);
+void remove_stair_from_cell(cell* receiver, cell* remove);
+void assign_bfs_neighbours();
+void assign_bfs_neighbour(cell* current_cell);
+void reset_flag_distances();
+void reset_flag_distance(cell* current_cell);
+void clear_bfs_neighbours();
+void clear_bfs_neighbour(cell* current_cell);
 
 extern cell* maze[FLOORS][WIDTH][LENGTH];
 extern player players[NUMBER_OF_PLAYERS];

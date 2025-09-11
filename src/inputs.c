@@ -11,8 +11,8 @@ void get_file_inputs()
     add_flag();
     seed_rand_function();
     add_valid_walls();
-    add_valid_poles();
     add_valid_stairs();
+    add_valid_poles();
 }
 
 //opens a requested file in inputs folder, 
@@ -170,7 +170,28 @@ void add_valid_stairs()
 
         end_cell = maze[end_floor][end_width][end_length];
 
+        //new logic using function
+        //step-by-step to avoid doubling
+        char start_status = assign_to_forced_then_second(start_cell, end_cell, stair_count);
+        if (!start_status)
+        {
+            printf("Only two stairs may be defined for a cell.\n");
+            printf("Stair %s has been discarded", buff);
+            continue;
+        }
 
+        char end_status = assign_to_forced_then_second(end_cell, start_cell, stair_count);
+        if (!end_status)
+        {
+            printf("Only two stairs may be defined for a cell.\n");
+            printf("Stair %s has been discarded", buff);
+            //must reset start, otherwise remnants may remain
+            if (start_status == 'F') start_cell->neighbours[FORCED] == NULL;
+            if (start_status == 'S') start_cell->neighbours[SECOND] == NULL;
+            continue;
+        }
+
+        /*
         // check for 2 staircases case
         if (
             start_cell->neighbours[FORCED] != NULL &&
@@ -209,6 +230,7 @@ void add_valid_stairs()
             end_cell->neighbours[FORCED] = start_cell;
             end_cell->n2 = stair_count;
         }
+        
 
         // fix cell types
         //edge case 
@@ -217,6 +239,7 @@ void add_valid_stairs()
             start_cell->type = STAIR;
         }
         end_cell->type = STAIR;
+        */
 
         // add stair to stair list
         stair current_stair = (stair){start_cell, end_cell, BIDIRECTIONAL};
@@ -263,6 +286,7 @@ void add_valid_poles()
     pole pole_list[GAME_CELL_CAP];
     while (fgets(buff, sizeof(buff), f) != NULL)
     {
+        //printf("Trying pole %s.\n", buff);
         unsigned int start_floor, end_floor, width, length;
         int args = sscanf(
             buff,
@@ -337,7 +361,11 @@ void add_valid_poles()
             middle_cell->neighbours[FORCED] = bottom_cell;
             middle_cell->neighbours[SECOND] = NULL;
             to_add.middle_cell = middle_cell;
+            //puts("MIDDLE CELL");
+            //print_cell(middle_cell);
         }
+        //puts("TOP CELL");
+        //print_cell(top_cell);
         top_cell->type = POLE;
         top_cell->neighbours[FORCED] = bottom_cell;
         top_cell->neighbours[SECOND] = NULL;

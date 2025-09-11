@@ -106,6 +106,8 @@ void print_maze()
 
                 switch (current_cell->type)
                 {
+                    case LINK_BAWANA:
+                    case LINK_START:
                     case GAME:
                         printf(COLOR_GAME " %i " RESET, current_cell->distance_to_flag);
                         break;
@@ -131,6 +133,33 @@ void print_maze()
             }
             printf("\n");
         }
+    }
+}
+
+
+void print_stairs()
+{
+    if (stairs == NULL) return;
+    for (int i = 0; i < stair_count; i++)
+    {
+        stair s = stairs[i];
+        puts("");
+        print_cell(s.start_cell);
+        switch (s.direction)
+        {      
+            case BIDIRECTIONAL:
+                printf(" <-> ");
+                break;
+            case TOP_TO_BOTTOM:
+                printf(" -> ");
+                break;
+            case BOTTOM_TO_TOP:
+                printf(" <- ");
+                break;
+            
+        }
+        print_cell(s.end_cell);
+        puts("");
     }
 }
 

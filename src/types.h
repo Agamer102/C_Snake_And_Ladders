@@ -71,7 +71,8 @@ typedef struct cell
     CELL_TYPE type;
     CELL_OPERATION movement_point_operation;
     char movement_point_operand;
-    struct cell* neighbours[DIRECTION_COUNT];
+    struct cell* neighbours[DIRECTION_COUNT]; //best neighbour will be FORCED
+    struct cell* bfs_neighbours[2]; //FORCED and SECOND only
     int n1;
     int n2;
     int distance_to_flag;
@@ -104,8 +105,8 @@ typedef struct
 
 typedef struct 
 {
-    cell* start_cell;
-    cell* end_cell;
+    cell* start_cell; //top cell
+    cell* end_cell; //bottom cell
     STAIR_DIRECTION direction;
 } stair;
 

@@ -12,6 +12,7 @@ char* sprint_bawana_cell(CELL_OPERATION type);
 void print_direction(DIRECTION dir);
 void print_bawana_cell(CELL_OPERATION op);
 void print_maze();
+void print_stairs();
 void print_turn(player* p);
 void print_start_no_6(player* p, unsigned char dice);
 void print_start_rolled_6(player* p);

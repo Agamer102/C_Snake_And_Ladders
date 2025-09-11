@@ -18,6 +18,10 @@ const cell empty_cell =
         NULL,
         NULL
     },
+    {
+        NULL,
+        NULL
+    },
     -1,
     -1,
     -1
@@ -218,7 +222,21 @@ void bfs(cell* flag)
 
         for (int dir = 0; dir < DIRECTION_COUNT; dir++)
         {
-            cell* next = current_cell->neighbours[dir];
+            cell* next;
+            if (dir == FORCED || dir == SECOND)
+            {
+                next = current_cell->bfs_neighbours[dir];
+                if (next != NULL)
+                {
+                    printf("BFS_CELL: ");
+                    print_cell(next);
+                }
+            }
+            else
+            {
+                next = current_cell->neighbours[dir];
+            }
+            
             if (next == NULL) continue;
 
             //cost for FORCED is 0, others is 1
@@ -248,3 +266,125 @@ void bfs(cell* flag)
     }
 }
 
+
+//returns F if assigned to forced, S if assigned to second, 0 if failed
+//assignee is cell that is to be assinged with assignor
+//NOTE: also sets cell type, but should not mess with poles
+char assign_to_forced_then_second(cell* assignee, cell* assignor, int index)
+{
+    if (assignee->type == POLE) return 0;
+    //check if forced is free or already assigned to correct
+    if 
+    (
+        assignee->neighbours[FORCED] == NULL ||
+        assignee->neighbours[FORCED] == assignor
+    )
+    {
+        assignee->neighbours[FORCED] = assignor;
+        assignee->n1 = index;
+        //only for GAME cells
+        if (assignee->type == GAME) assignee->type = STAIR;
+
+        return 'F';
+    }
+
+    //check if second is free next, or already assigned to correct
+    if 
+    (
+        assignee->neighbours[SECOND] == NULL ||
+        assignee->neighbours[SECOND] == assignor
+    )
+    {
+        assignee->neighbours[SECOND] = assignor;
+        assignee->n2 = index;
+        if (assignee->type == GAME) assignee->type = STAIR;
+        return 'S';
+    }
+
+    return 0;
+}
+
+
+void remove_stair_from_cell(cell* receiver, cell* remove)
+{
+    if (receiver->type == POLE) return;
+    if (receiver->neighbours[FORCED] == remove)
+    {
+        //if block is no longer a stair cell, reflect that
+        if (receiver->neighbours[SECOND] == NULL)
+        {
+            //only ovewrite types if stair
+            if (receiver->type == STAIR) receiver->type = GAME;
+        }
+        receiver->neighbours[FORCED] = NULL;
+    }
+    else if (receiver->neighbours[SECOND] == remove)
+    {
+        //if block is no longer stair, reflect that
+        if (receiver->neighbours[FORCED] == NULL)
+        {
+            if (receiver->type == STAIR) receiver->type = GAME;
+        }
+        receiver->neighbours[SECOND] = NULL;
+    }
+}
+
+
+void assign_bfs_neighbours()
+{
+    iterate_map((void*) &assign_bfs_neighbour);
+}
+
+
+void assign_bfs_neighbour(cell* current_cell)
+{
+    if (current_cell->type != STAIR && current_cell->type != POLE) return;
+    for (DIRECTION dir = FORCED; dir <= SECOND; dir++)
+    {
+        cell* neighbour = current_cell->neighbours[dir];
+        if (neighbour == NULL) continue;
+
+        //warning, here we may overwriting
+        if (
+            neighbour->bfs_neighbours[FORCED] == NULL ||
+            neighbour->bfs_neighbours[FORCED] == current_cell
+        )
+        {
+            neighbour->bfs_neighbours[FORCED] = current_cell;
+        }
+        else
+        {
+            neighbour->bfs_neighbours[SECOND] = current_cell;
+        }
+
+        printf("BFS NEIGHBOUR ASSIGNED to %i: of ", dir);
+        print_cell(current_cell);
+        printf(" to ");
+        print_cell(neighbour);
+    }
+}
+
+
+void reset_flag_distances()
+{
+    iterate_map((void*) &reset_flag_distance);
+}
+
+
+void reset_flag_distance(cell* current_cell)
+{
+    current_cell->distance_to_flag = -1;
+}
+
+
+void clear_bfs_neighbours()
+{
+    iterate_map((void*) &clear_bfs_neighbour);
+}
+
+
+void clear_bfs_neighbour(cell* current_cell)
+{
+    current_cell->bfs_neighbours[FORCED] = NULL;
+    current_cell->bfs_neighbours[SECOND] = NULL;
+}
