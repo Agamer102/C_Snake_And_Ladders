@@ -24,7 +24,7 @@ void fix_neighbours();
 void fix_cell_neighbour(cell* current_cell);
 void get_distances_to_flag();
 void reverse_poles();
-void undo_reverse_poles();
+void add_poles_from_list();
 void assign_movement_points();
 void assign_bawana_cells();
 void is_game_cell(cell* current_cell);
@@ -38,5 +38,6 @@ extern stair* stairs;
 extern cell* flag;
 extern pole* poles;
 extern int pole_count;
+extern cell* loop_link_cell;
 
 #endif

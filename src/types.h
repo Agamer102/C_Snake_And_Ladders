@@ -32,7 +32,8 @@ typedef enum
     BAWANA,
     LINK_START,
     LINK_BAWANA,
-    DEAD
+    LINK_LOOP,
+    DEAD,
 } CELL_TYPE;
 
 typedef enum
@@ -56,10 +57,12 @@ typedef enum
 typedef enum
 {
     SUCCESS,
+    FOUND_FLAG,
     HIT_WALL,
-    STAIR_POLE_LOOP,
+    FELL_TO_LOOP,
     FELL_TO_START,
     FELL_TO_BAWANA,
+    FELL_TO_DEAD,
     RAN_OUT_OF_MOVEMENT_POINTS
 } MOVEMENT;
 
@@ -76,6 +79,7 @@ typedef struct cell
     int n1;
     int n2;
     int distance_to_flag;
+    char visited;
 } cell;
 //n1, n2 is set by default to -1 and are used
 /*
@@ -86,6 +90,12 @@ START: -1
 WALL: -1
 BAWANA: 
 */
+
+typedef struct
+{
+    MOVEMENT move_result;
+    cell* moved_to;
+} movement_packet;
 
 
 typedef struct

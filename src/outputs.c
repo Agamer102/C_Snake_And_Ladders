@@ -42,6 +42,35 @@ void print_direction(DIRECTION dir)
 }
 
 
+char* sprint_direction(DIRECTION dir)
+{
+    static char buff[DIRECTION_LENGTH];
+    switch (dir)
+    {
+        case 0:
+            break;
+        case 1:
+            break;
+        case NORTH:
+            strcpy(buff, "North direction");
+            break;
+        case EAST:
+            strcpy(buff, "East directon");
+            break;
+        case SOUTH:
+            strcpy(buff, "South direction");
+            break;
+        case WEST:
+            strcpy(buff, "West direction");
+            break;
+        case 6:
+            strcpy(buff, "Empty");
+            break;
+    }
+    return buff;
+}
+
+
 void print_bawana_cell(CELL_OPERATION op)
 {
     switch (op)
@@ -211,4 +240,98 @@ void print_disoriented_wears_off(player* p)
 void print_triggered_wears_off(player* p)
 {
     printf("%c is no longer triggered.\n", p->name);
+}
+
+
+void print_pole_message(player* p, cell* pole_cell, cell* next_cell)
+{
+    printf
+    (
+        "%c lands on %s which is a pole cell.\n %c slides down and now placed at %s in floor %u.\n",
+        p->name, sprint_cell(pole_cell), p->name, sprint_cell(next_cell), next_cell->floor
+    );
+}
+
+
+void print_stair_message(player* p, cell* stair_cell, cell* next_cell)
+{
+    printf
+    (
+        "%c lands on %s which is a stair cell. %c takes the stairs and now placed at %s in floor %i.\n",
+        p->name, sprint_cell(stair_cell), p->name, sprint_cell(next_cell), next_cell->floor
+    );
+}
+
+
+void print_ran_out_of_movement_points_message(player *p)
+{
+    printf 
+    (
+        "%c movement points are depleted and requires replenishment. Transporting to Bawana.",
+        p->name
+    );
+}
+
+
+void print_effect_movement_message(player *p, unsigned char dice, DIRECTION dir)
+{
+    switch (p->status_effect)
+    {
+        //normal case
+        case ADD:
+        case MUL:
+            //returns direction if rolled, 0 if not and 6 if EMPTY
+            if (dir == 0)
+            {
+                printf
+                (
+                    "%c rolls and %u on the movement dice and moves %s by %u cells and is now at %s.\n",
+                    p->name, dice, sprint_direction(p->current_direction), dice, sprint_cell(p->location)
+                );
+            }
+            else
+            {
+                printf
+                (
+                    "%c rolls and %u on the movement dice and %s on the direction dice, changes direction to %s and moves %u cells and is now at %s.\n",
+                    p->name, dice, sprint_direction(dir), sprint_direction(p->current_direction), dice, sprint_cell(p->location)
+                );
+            }
+            break;
+        case TRIGGERED:
+            if (dir == 0)
+            {
+                printf
+                (
+                    "%c is triggered and rolls and %u on the movement dice and move in the %s and moves %u cells and is placed at the %s.\n",
+                    p->name, dice / 2, sprint_direction(p->current_direction), dice * 2, sprint_cell(p->location)
+                );
+            }
+            else
+            {
+                printf
+                (
+                    "%c is triggered and rolls and %u on the movement dice and %s on the direction dice, changes direction to %s and move in the %s and moves %u cells and is placed at the %s.\n",
+                    p->name, dice / 2, sprint_direction(dir), sprint_direction(p->current_direction), sprint_direction(p->current_direction), dice * 2, sprint_cell(p->location)
+                );   
+            }
+        case DISORIENTED:
+            printf
+            (
+                "%c rolls and %u on the movement dice and is disoriented and move in the %s and moves %u cells and is placed at the %s.\n",
+                p->name, dice, sprint_direction(p->current_direction), dice, sprint_cell(p->location)
+            );
+            break;
+
+    }
+}
+
+
+void print_movement_points_consumed_message(player *p, int dice, int cost)
+{
+    printf
+    (
+        "%c moved %u that cost %i movement points and is left with %u and is moving in the %s.",
+        p->name, dice, cost, p->movement_points, sprint_direction(p->current_direction)
+    );
 }

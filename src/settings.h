@@ -21,6 +21,13 @@
 #define BAWANA_LINK_WIDTH 9
 #define BAWANA_LINK_LENGTH 13
 #define BAWANA_NAME_LENGTH 30
+#define LOOP_LINK_WIDTH 9
+#define LOOP_LINK_LENGTH 11
+#define PATH_DEPTH 200
+#define PATH_NAME_LENGTH 1000
+#define POLE_MESSAGE_LENGTH 150
+#define STAIR_MESSAGE_LENGTH 150
+#define DIRECTION_LENGTH 20
 
 //colors to be used mainly for visualization only
 #define COLOR_GAME "\x1B[37m" //white

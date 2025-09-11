@@ -36,6 +36,8 @@ void reset_flag_distances();
 void reset_flag_distance(cell* current_cell);
 void clear_bfs_neighbours();
 void clear_bfs_neighbour(cell* current_cell);
+void reset_visited_cells();
+void reset_visited_cell(cell* current_cell);
 
 extern cell* maze[FLOORS][WIDTH][LENGTH];
 extern player players[NUMBER_OF_PLAYERS];
@@ -47,5 +49,7 @@ extern cell* bawana[BAWANA_CELL_COUNT];
 extern cell* bawana_entrance;
 extern const int bawana_points[OPERATION_COUNT];
 extern const int bawana_duration[OPERATION_COUNT];
+
+extern cell* loop_link_cell;
 
 #endif

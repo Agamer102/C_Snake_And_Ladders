@@ -76,6 +76,10 @@ void generate_map()
     fill_section(0, BAWANA_LINK_WIDTH, BAWANA_LINK_LENGTH, BAWANA_LINK_WIDTH, BAWANA_LINK_LENGTH, LINK_BAWANA);
     bawana_link_cell = maze[0][BAWANA_LINK_WIDTH][BAWANA_LINK_LENGTH];
 
+    //also a loop link, that represents player entering an infinite loop
+    fill_section(0, LOOP_LINK_WIDTH, LOOP_LINK_LENGTH, LOOP_LINK_WIDTH, LOOP_LINK_LENGTH, LINK_LOOP);
+    loop_link_cell = maze[0][LOOP_LINK_WIDTH][LOOP_LINK_LENGTH];
+
     fill_section(0, 6, 20, 9, 20, WALL);
     fill_section(0, 6, 21, 6, 24, WALL);
     fill_section(0, 7, 21, 9, 24, BAWANA);
@@ -151,18 +155,22 @@ void reverse_poles()
 }
 
 
-void undo_reverse_poles()
+//overwrites charac of stair
+void add_poles_from_list()
 {
     for (int i = 0; i < pole_count; i++)
     {
         pole current = poles[i];
 
+        current.top_cell->type = POLE;
         current.top_cell->neighbours[FORCED] = current.bottom_cell;
         if (current.middle_cell != NULL)
         {
+            current.top_cell->type = POLE;
             current.middle_cell->neighbours[FORCED] = current.bottom_cell;
         }
-        current.bottom_cell->neighbours[FORCED] = NULL;
+        //don't this may overwrite a stair pointer
+        //current.bottom_cell->neighbours[FORCED] = NULL;
     }
 }
 

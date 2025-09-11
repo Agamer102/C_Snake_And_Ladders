@@ -24,7 +24,8 @@ const cell empty_cell =
     },
     -1,
     -1,
-    -1
+    -1,
+    0
 };
 
 
@@ -272,7 +273,7 @@ void bfs(cell* flag)
 //NOTE: also sets cell type, but should not mess with poles
 char assign_to_forced_then_second(cell* assignee, cell* assignor, int index)
 {
-    if (assignee->type == POLE) return 0;
+    //if (assignee->type == POLE) return 0;
     //check if forced is free or already assigned to correct
     if 
     (
@@ -307,7 +308,7 @@ char assign_to_forced_then_second(cell* assignee, cell* assignor, int index)
 
 void remove_stair_from_cell(cell* receiver, cell* remove)
 {
-    if (receiver->type == POLE) return;
+    //if (receiver->type == POLE) return;
     if (receiver->neighbours[FORCED] == remove)
     {
         //if block is no longer a stair cell, reflect that
@@ -388,3 +389,16 @@ void clear_bfs_neighbour(cell* current_cell)
     current_cell->bfs_neighbours[FORCED] = NULL;
     current_cell->bfs_neighbours[SECOND] = NULL;
 }
+
+
+void reset_visited_cell(cell* current_cell)
+{
+    //print_cell(current_cell);
+    current_cell->visited = 0;
+}
+
+void reset_visited_cells()
+{
+    iterate_map((void*) &reset_visited_cell);
+}
+
