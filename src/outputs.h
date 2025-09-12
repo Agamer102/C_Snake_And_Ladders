@@ -25,5 +25,18 @@ void print_pole_message(player* p, cell* pole_cell, cell* next_cell);
 void print_stair_message(player* p, cell* stair_cell, cell* next_cell);
 void print_ran_out_of_movement_points_message(player *p);
 void print_effect_movement_message(player *p, unsigned char dice, DIRECTION dir);
+void print_still_food_poisoned_message(player* p);
 void print_movement_points_consumed_message(player *p, int dice, int cost);
+void print_hit_wall_message(player *p, int dice);
+void print_fell_to_loop_message(player *p);
+void print_fell_to_start_message(player *p);
+void print_fell_to_dead_message(player* p);
+void print_fell_to_bawana_message(player *p);
+void print_placed_in_bawana_message(player* p, CELL_OPERATION op, int food_poisoned);
+void print_get_food_poisoning_message(player* p);
+void print_get_disoriented_message(player* p);
+void print_get_triggered_message(player* p);
+void print_get_happy_message(player* p);
+void print_get_bawana_points_message(player* p, int bonus);
+void print_found_flag_message(player* p);
 #endif

@@ -14,24 +14,7 @@ int pole_count = 0;
 
 cell* bawana[BAWANA_CELL_COUNT];
 cell* bawana_entrance;
-const int bawana_points[OPERATION_COUNT] =
-{
-    0, //ADD
-    0, //MUL: INVALID
-    0, //FOOD_POISONING
-    50, //DISORIENTED
-    50, //TRIGGERED
-    200 //HAPPY
-};
-const int bawana_duration[OPERATION_COUNT] = 
-{
-    0, //ADD
-    0, //MUL: INVALID
-    3, //FOOD_POISONING
-    4, //DISORIENTED
-    4, //TRIGGERED
-    0 //HAPPY: NOTE: This is realistic
-};
+
 
 cell* flag = NULL;
 
@@ -42,23 +25,30 @@ cell* loop_link_cell = NULL;
 void play_game()
 {
     init();
+    recalculate_distances_to_flag();
+    print_maze();
     do
     {
         turn(players + (game_ticks % 3));
         if (game_ticks % STAIR_DIRECTION_CHANGE_TURNS == STAIR_DIRECTION_CHANGE_TURNS - 1) 
         {
-            reset_flag_distances();
-            reset_visited_cells();
-            clear_bfs_neighbours();
             randomize_stair_direction();
             add_poles_from_list();
-            assign_bfs_neighbours();
-            bfs(flag);
-            print_maze();
-            print_stairs();
+            recalculate_distances_to_flag();
+            //print_maze();
+            //print_stairs();
         }
     } while (++game_ticks);
     
+}
+
+void recalculate_distances_to_flag()
+{
+    clear_bfs_neighbours();
+    reset_flag_distances();
+    reset_visited_cells();
+    assign_bfs_neighbours();
+    bfs(flag);
 }
 
 
@@ -96,15 +86,25 @@ void randomize_stair_direction()
 
 void turn(player* current_player)
 {
-    //print_turn(current_player);
+    printf("\n");
+    print_turn(current_player);
+    if (current_player->movement_points > 1000 || current_player->movement_points < 0)
+    {
+        exit(0);
+    }
+
     unsigned char dice = 0;
     DIRECTION direction_dice = 0;
 
     //effects tick, but have no actual effect when player in starting
-    handle_effect_duration(current_player);
+    if (current_player->status_effect != ADD) handle_effect_duration(current_player);
 
     //food poisoning is special, needs to be handled seperately
-    if(current_player->status_effect == FOOD_POISONING) return food_poisoning_logic(current_player);
+    if(current_player->status_effect == FOOD_POISONING)
+    {
+        food_poisoning_logic(current_player);
+        return;
+    } 
 
     //handle start case
     if (current_player->location == current_player->start)
@@ -114,6 +114,7 @@ void turn(player* current_player)
         {
             //move player to their starting game square
             current_player->location = current_player->start->neighbours[FORCED];
+            //print_cell(current_player->location);
 
             //print AFTER
             print_start_rolled_6(current_player);
@@ -125,12 +126,8 @@ void turn(player* current_player)
         //end of starting logic block
         return;
     }
-
-    //temp block
-    return;
-
     
-
+    //printf("OUT OF START.\n");
     //first handle the dice
     switch (current_player->status_effect)
     {
@@ -139,6 +136,7 @@ void turn(player* current_player)
         case MUL:
             dice = roll_dice();
             direction_dice = roll_direction_dice_for(current_player);
+            //printf("NORMAL DICE ROLLED.\n");
             break;
         case DISORIENTED:
             dice = roll_dice();
@@ -154,13 +152,27 @@ void turn(player* current_player)
     }
 
     //master function, handles the rest
-    return handle_effect_movement(current_player, dice, direction_dice);
+    handle_effect_movement(current_player, dice, direction_dice);
+    return;
 }
 
 
 void food_poisoning_logic(player* current_player)
 {
-    //TODO
+    if (current_player->status_duration < 1)
+    {
+        //food poisoning has worn off
+        current_player->status_effect = ADD;
+        current_player->status_duration = 0;
+        current_player->status_factor = 1;
+        transport_to_bawana(current_player, 1);
+        return;
+    }
+    else
+    {
+        print_still_food_poisoned_message(current_player);
+        return;
+    }
 }
 
 
@@ -193,22 +205,40 @@ void handle_effect_duration(player* current_player)
 //ONLY disoriented and triggered and normal to consider
 void handle_effect_movement(player* current_player, unsigned char dice, DIRECTION direction_dice)
 {
+    //direction changes depending on from where the player came
+    if (current_player->from != NULL && current_player->from->type == BAWANA)
+    {
+        current_player->current_direction = NORTH;
+    }
+
     int dice_m = dice;
     DIRECTION dir = direction_dice;
     cell* next = current_player->location;
+    //print_cell(next);
 
     int movement_point_sum = 0;
     int movement_point_factor = 1;
 
     MOVEMENT status = SUCCESS;
+
+    //printf("READY TO MOVE.\n");
     while (dice_m > 0 && status == SUCCESS)
     {
+        //printf("DICE %i\n", dice_m);
         //only game, stair and pole,
         //special logic is handled later
+
         switch (next->type)
         {
+            case STAIR:
+            case POLE:
+                movement_packet mov = move_from_stair_pole(current_player, next);
+                status = mov.move_result;
+                next = mov.moved_to;
             case GAME:
-                next = next->neighbours[dir];
+                //printf("Maybe fallen.\n");
+                //if (dice_m == dice && (next->type == POLE || next->type == STAIR)) exit(0);
+                next = next->neighbours[current_player->current_direction];
                 status = move_to_game(next);
                 if (status == SUCCESS)
                 {
@@ -223,38 +253,98 @@ void handle_effect_movement(player* current_player, unsigned char dice, DIRECTIO
                 }
                 dice_m--;
                 break;
-            case STAIR:
-            case POLE:
-                movement_packet mov = move_from_stair_pole(current_player, next);
-                status = mov.move_result;
-                next = mov.moved_to;
+            case BAWANA:
+                status = FELL_TO_BAWANA;
+                break;
+            case DEAD:
+                status = FELL_TO_DEAD;
+                break;
+            case WALL:
+                status = HIT_WALL;
+                break;
+            default:
+                printf("UNEXPECTED STATUS %i.\n", status);
         }
     }
+    //printf("DICE FIN %i.\n", dice_m);
     //check where we ended up
     if (
-        next != NULL && next->type != STAIR && next->type != POLE
+        next == NULL ||
+        (next->type != STAIR && next->type != POLE)
     )
     {
+        if (next != NULL) current_player->from = current_player->location;
         status = move_to_game(next);
     }
 
+    int net_movement_points = movement_point_sum * movement_point_factor;
+    int dice_cost = WALL_HIT_DICE_COST * ((dice>0?1:0) + ((dir>0?1:0)));
     switch (status)
     {
         case SUCCESS:
+            //printf("SUCCESS CASE.\n");
             //now only, we check movement points
-            int net_movement_points = movement_point_sum * movement_point_factor;
-            if (current_player->movement_points <= -1 * net_movement_points)
+            if (current_player->movement_points + net_movement_points <= 0)
             {
-                //ran out of movement points
-                print_ran_out_of_movement_points_message(current_player);
-                //TODO
-                //return place_in_bawana();
+                //printf("OUT OF MOVEMENT.\n");
+                status = RAN_OUT_OF_MOVEMENT_POINTS;
+                break;
             }
-            current_player->movement_points += net_movement_points;
-            print_effect_movement_message(current_player, dice, dir);
-            print_movement_points_consumed_message(current_player, dice, -1 * net_movement_points);
+            else
+            {
+                current_player->location = next;
+                current_player->movement_points += net_movement_points;
+                print_effect_movement_message(current_player, dice, dir);
+                print_movement_points_consumed_message(current_player, dice, -1 * net_movement_points);
+                return;
+            }
+        case FOUND_FLAG:
+            print_found_flag_message(current_player);
+            quit_game_safely();
+            return;
+        case HIT_WALL:       
+            if 
+            (
+                current_player->movement_points <= dice_cost
+            )
+            {
+                status = RAN_OUT_OF_MOVEMENT_POINTS;
+                break;
+            }
+            else
+            {
+                current_player->movement_points -= dice_cost;
+                print_hit_wall_message(current_player, dice);
+                return;
+            }
+        case FELL_TO_LOOP:
+            current_player->location = current_player->start;
+            print_fell_to_loop_message(current_player);
+            return;
+        case FELL_TO_START:
+            current_player->location = current_player->start;
+            print_fell_to_start_message(current_player);
+            return;
+        case FELL_TO_DEAD:
+            current_player->location = bawana_entrance;
+            print_fell_to_dead_message(current_player);
+            return;
+        case FELL_TO_BAWANA:
+            print_fell_to_bawana_message(current_player);
+            transport_to_bawana(current_player, 0);
+            return;
+        default:
+            //printf("ERROR CASE %i", status);
+            //exit(-1);
     }
-    //TODO
+    if (status == RAN_OUT_OF_MOVEMENT_POINTS)
+    {
+        //printf("AT RAN OUT OF MOV");
+        print_ran_out_of_movement_points_message(current_player);
+        current_player->movement_points = 0;
+        transport_to_bawana(current_player, 0);
+        return;
+    }
     
 }
 
@@ -271,6 +361,7 @@ MOVEMENT move_to_game(cell* to_move_to)
         case STAIR:
         case POLE:
             return SUCCESS;
+        case START:
         case WALL:
             return HIT_WALL;
         case FLAG:
@@ -279,6 +370,7 @@ MOVEMENT move_to_game(cell* to_move_to)
             return FELL_TO_LOOP;
         case LINK_START:
             return FELL_TO_START;
+        case BAWANA:
         case LINK_BAWANA:
             return FELL_TO_BAWANA;
         case DEAD:
@@ -291,6 +383,7 @@ MOVEMENT move_to_game(cell* to_move_to)
 //It is IMPERATIVE that it resets the values correctly
 movement_packet move_from_stair_pole(player* p, cell* start)
 {
+    //printf("TRYING STAIR/POLE MOVEMENT.\n");
     cell* next = start;
     cell* visited_cells[PATH_DEPTH];
     int visited_n = 0;
@@ -302,6 +395,7 @@ movement_packet move_from_stair_pole(player* p, cell* start)
         if (next->visited == 1)
         {
             path_result = FELL_TO_LOOP;
+            break;
         }
         //always add a visit to the array, so we can undo
         next->visited = 1;
@@ -335,33 +429,9 @@ movement_packet move_from_stair_pole(player* p, cell* start)
             continue;
         }
 
-        //decision case, pick a random edge, go and see what happens
-        int forced_cost = 0;
-        int second_cost = 0;
-
-        //go checkout second, for this we remove FORCED
-        next->neighbours[FORCED] == NULL;
-        assign_bfs_neighbour(next);
-        assign_bfs_neighbour(forced);
-        assign_bfs_neighbour(second);
-        bfs(flag);
-        second_cost = second->distance_to_flag;
-
-        //now forced
-        next->neighbours[FORCED] = forced;
-        next->neighbours[SECOND] = NULL;
-        assign_bfs_neighbour(next);
-        assign_bfs_neighbour(forced);
-        assign_bfs_neighbour(second);
-        bfs(flag);
-        forced_cost = forced->distance_to_flag;
-
-        //undo everyting
-        next->neighbours[SECOND] = second;
-        assign_bfs_neighbour(next);
-        assign_bfs_neighbour(forced);
-        assign_bfs_neighbour(second);
-        bfs(flag);
+        int forced_cost = forced->distance_to_flag;
+        int second_cost = second->distance_to_flag;
+    
 
         if (forced_cost < second_cost)
         {
@@ -370,18 +440,29 @@ movement_packet move_from_stair_pole(player* p, cell* start)
         }
         else if (second_cost < forced_cost)
         {
-            next = forced;
+            next = second;
             continue;
         }
         else
         {
-            // a loop is very highly likely
-            printf("LOOP DETECTED.\n");
-            print_cell(forced);
-            print_cell(second);
-            puts("");
+            //complicated problem, is this particular one
+            //simple priority to node on flag
+            if (forced->floor == flag->floor)
+            {
+                next = forced;
+                continue;
+            }
+            else if (second->floor = flag->floor)
+            {
+                next = second;
+                continue;
+            }
+            else
+            {
+                next = rand() % 2 == 0 ? forced : second;
+                continue;
+            }
 
-            path_result = FELL_TO_LOOP;
         }
     }
 
@@ -391,13 +472,18 @@ movement_packet move_from_stair_pole(player* p, cell* start)
         visited_cells[i]->visited = 0;
     }
 
+    if (next == NULL)
+    {
+        //printf("LOGIC ERROR.\n");
+    }
+
 
     switch (path_result)
     {
         case SUCCESS:
             //path is now valid, print the path the player took
             visited_cells[visited_n++] = next;
-            for (int i = 0; i < visited_n; i++)
+            for (int i = 0; i < visited_n - 1; i++)
             {
                 cell* vis = visited_cells[i];
 
@@ -414,6 +500,47 @@ movement_packet move_from_stair_pole(player* p, cell* start)
         default:
             return (movement_packet) {path_result, next};
             
+    }
+}
+
+
+void transport_to_bawana(player* current_player, int food_poisoned)
+{
+    cell* to_move_to = bawana[rand() % BAWANA_CELL_COUNT];
+    CELL_OPERATION op = to_move_to->movement_point_operation;
+    int bonus = bawana_points[op];
+
+    print_placed_in_bawana_message(current_player, op, food_poisoned);
+
+    //fix player's status
+    current_player->from = current_player->location;
+    current_player->location = bawana_entrance;
+    current_player->status_effect = op;
+    current_player->status_duration = bawana_duration[op];
+    current_player->movement_points += bonus;
+
+    switch (op)
+    {
+        case FOOD_POISONING:
+            print_get_food_poisoning_message(current_player);
+            return;
+        case DISORIENTED:
+            print_get_disoriented_message(current_player);
+            return;
+        case TRIGGERED:
+            current_player->status_factor *= TRIGGER_FACTOR;
+            print_get_triggered_message(current_player);
+            return;
+        case HAPPY:
+            print_get_happy_message(current_player);
+            return;
+        case ADD:
+        case MUL:
+            //overwrite for different logic
+            current_player->location = to_move_to;
+            bonus = to_move_to->movement_point_operand;
+            print_get_bawana_points_message(current_player, bonus);
+            return;
     }
 }
 
@@ -445,3 +572,5 @@ DIRECTION roll_direction_dice_for(player* current_player)
     current_player->direction_dice = current_player->direction_dice % 4;
     return 0;
 }
+
+

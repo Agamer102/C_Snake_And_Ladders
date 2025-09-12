@@ -1,6 +1,8 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include "types.h"
+
 #define FLOORS 3
 #define WIDTH 10
 #define LENGTH 25
@@ -15,7 +17,6 @@
 #define BAWANA_CELL_COUNT 12
 #define TRIGGER_FACTOR 2
 #define WALL_HIT_DICE_COST 2
-#define DEQUE_CAP 10000
 #define START_LINK_WIDTH 9
 #define START_LINK_LENGTH 12
 #define BAWANA_LINK_WIDTH 9
@@ -28,6 +29,7 @@
 #define POLE_MESSAGE_LENGTH 150
 #define STAIR_MESSAGE_LENGTH 150
 #define DIRECTION_LENGTH 20
+#define UNREACHABLE_DISTANCE 10000
 
 //colors to be used mainly for visualization only
 #define COLOR_GAME "\x1B[37m" //white
@@ -52,5 +54,8 @@ extern char* STAIRS_TXT;
 extern char* POLES_TXT;
 extern char* WALLS_TXT;
 extern char* FLAG_TXT;
+
+extern const int bawana_points[OPERATION_COUNT];
+extern const int bawana_duration[OPERATION_COUNT];
 
 #endif

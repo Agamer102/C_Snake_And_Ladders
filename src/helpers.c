@@ -24,7 +24,7 @@ const cell empty_cell =
     },
     -1,
     -1,
-    -1,
+    UNREACHABLE_DISTANCE,
     0
 };
 
@@ -229,8 +229,8 @@ void bfs(cell* flag)
                 next = current_cell->bfs_neighbours[dir];
                 if (next != NULL)
                 {
-                    printf("BFS_CELL: ");
-                    print_cell(next);
+                    //printf("BFS_CELL: ");
+                    //print_cell(next);
                 }
             }
             else
@@ -240,21 +240,20 @@ void bfs(cell* flag)
             
             if (next == NULL) continue;
 
-            //cost for FORCED is 0, others is 1
             int cost = (dir == FORCED || dir == SECOND) ? 0: 1;
 
             //check if next is unvisited, or visited and the cost
             //is less than the current route
             if 
             (
-                next->distance_to_flag == -1 ||
+                next->distance_to_flag == UNREACHABLE_DISTANCE ||
                 next->distance_to_flag > current_cell->distance_to_flag + cost
             )
             {
                 next->distance_to_flag = current_cell->distance_to_flag + cost;
 
                 //we push to deque based on cost
-                if (cost == 0)
+                if (cost == 1)
                 {
                     deque_push_front(&dq, next);
                 }
@@ -331,6 +330,46 @@ void remove_stair_from_cell(cell* receiver, cell* remove)
 }
 
 
+void assign_bfs_neighbours_trivial()
+{
+    iterate_map((void*) &assign_bfs_neighbour_trivial);
+}
+
+
+void assign_bfs_neighbour_trivial(cell* current_cell)
+{
+    if (current_cell->type != STAIR && current_cell->type != POLE) return;
+    //special pole logic
+
+    if (current_cell->type == POLE)
+    {
+        //the pole HAS NO BFS neighbours, because it's fixed
+        current_cell->bfs_neighbours[FORCED] = NULL;
+        current_cell->bfs_neighbours[SECOND] = NULL;
+        if (current_cell->neighbours[FORCED != NULL])
+            current_cell->neighbours[FORCED]->bfs_neighbours[FORCED] = current_cell;
+        return;
+    }
+
+    for (DIRECTION dir = FORCED; dir <= SECOND; dir++)
+    {
+        cell* neighbour = current_cell->neighbours[dir];
+        //do NOT mess with the poles if you're a stair
+        if (neighbour == NULL || neighbour->type == POLE) continue;
+
+        for (int i = 0; i < BFS_NEIGHBOURS; i++)
+        {
+            if (neighbour->bfs_neighbours[i] == current_cell) break;
+            if (neighbour->bfs_neighbours[i] == NULL)
+            {
+                neighbour->bfs_neighbours[i] = current_cell;
+                break;
+            }
+        }
+    }
+}
+
+
 void assign_bfs_neighbours()
 {
     iterate_map((void*) &assign_bfs_neighbour);
@@ -340,10 +379,99 @@ void assign_bfs_neighbours()
 void assign_bfs_neighbour(cell* current_cell)
 {
     if (current_cell->type != STAIR && current_cell->type != POLE) return;
+    //special pole logic
+    if (current_cell->type == POLE)
+    {
+        //the pole HAS NO BFS neighbours, because it's fixed
+        current_cell->bfs_neighbours[FORCED] = NULL;
+        current_cell->bfs_neighbours[SECOND] = NULL;
+        cell* landing = current_cell->neighbours[FORCED];
+        
+        if (landing != NULL)
+        {
+            //3 is max bfs neighbour cap
+            for (int i = 0; i < BFS_NEIGHBOURS; i++)
+            {
+                if (landing->bfs_neighbours[i] == NULL)
+                {
+                    landing->bfs_neighbours[i] = current_cell;
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        //stair logic
+        cell* forced_ne = current_cell->neighbours[FORCED];
+        cell* second_ne = current_cell->neighbours[SECOND];
+
+        int forced_back = forced_ne && 
+        (
+            forced_ne->neighbours[FORCED] == current_cell || forced_ne->neighbours[SECOND] == current_cell
+        );
+        int second_back = second_ne && 
+        (
+            second_ne->neighbours[FORCED] == current_cell || second_ne->neighbours[SECOND] == current_cell
+        );    
+
+        //if this is the middle of a bidirectional stair, this cell is UNREACHABLE
+        if (forced_back && second_back)
+        {
+            for (int i = 0; i < BFS_NEIGHBOURS; i++) current_cell->bfs_neighbours[i] = NULL;
+            return;
+        }
+
+        //now we must follow the chain until it terminates
+        for (int dir = FORCED; dir <= SECOND; dir++)
+        {
+            cell* next = current_cell->neighbours[dir];
+            if (next == NULL) continue;
+
+            cell* prev = current_cell;
+            while (next != NULL && (next->type == STAIR || next->type == POLE))
+            {
+                cell* temp;
+                if (next->type == POLE)
+                {
+                    temp = next->neighbours[FORCED];
+                }
+                else
+                {
+                    //if you are pointing to it and you are a stair it MUST be the case
+                    //that at init, it pointed to you too
+                    //THEREFORE due to the 2 stair cap, we can take this amazing shortcut
+                    if (next->neighbours[FORCED] != prev) temp = next->neighbours[FORCED];
+                    else if (next->neighbours[SECOND] != prev) temp = next->neighbours[SECOND];
+                    else temp = NULL;
+                }
+                prev = next;
+                next = temp;
+            }
+
+            //for this edge, now we MUST be pointing to it's terminal destination
+            //Assign value to prev, as it is the last stair/pole which must have this value
+            if (prev != NULL)
+            {
+                for (int i = 0; i < BFS_NEIGHBOURS; i++)
+                {
+                    if (prev->bfs_neighbours[i] == NULL)
+                    {
+                        prev->bfs_neighbours[i] = current_cell;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+
     for (DIRECTION dir = FORCED; dir <= SECOND; dir++)
     {
         cell* neighbour = current_cell->neighbours[dir];
-        if (neighbour == NULL) continue;
+        //do NOT mess with the poles if you're a stair
+        if (neighbour == NULL || neighbour->type == POLE) continue;
 
         //warning, here we may overwriting
         if (
@@ -353,15 +481,41 @@ void assign_bfs_neighbour(cell* current_cell)
         {
             neighbour->bfs_neighbours[FORCED] = current_cell;
         }
-        else
+        else if 
+        (
+            neighbour->bfs_neighbours[SECOND] == NULL ||
+            neighbour->bfs_neighbours[SECOND] == current_cell
+        )
         {
             neighbour->bfs_neighbours[SECOND] = current_cell;
         }
+        else    
+        {
+            printf("FULL CASE.\n");
+            exit(-1);
+        }
 
-        printf("BFS NEIGHBOUR ASSIGNED to %i: of ", dir);
-        print_cell(current_cell);
-        printf(" to ");
-        print_cell(neighbour);
+
+        //printf("BFS NEIGHBOUR ASSIGNED to %i: of ", dir);
+        //print_cell(current_cell);
+        //printf(" to ");
+        //print_cell(neighbour);
+    }
+    */
+}
+
+
+void assign_dead_cells()
+{
+    iterate_map((void*) &assign_dead_cell);
+}
+
+
+void assign_dead_cell(cell* current_cell)
+{
+    if (current_cell->type == GAME || current_cell->type == STAIR || current_cell->type == POLE)
+    {
+        if (current_cell->distance_to_flag == UNREACHABLE_DISTANCE) current_cell->type = DEAD;
     }
 }
 
@@ -374,7 +528,7 @@ void reset_flag_distances()
 
 void reset_flag_distance(cell* current_cell)
 {
-    current_cell->distance_to_flag = -1;
+    current_cell->distance_to_flag = UNREACHABLE_DISTANCE;
 }
 
 
@@ -402,3 +556,16 @@ void reset_visited_cells()
     iterate_map((void*) &reset_visited_cell);
 }
 
+void quit_game_safely()
+{
+    free_map();
+    if (stairs != NULL)
+    {
+        free(stairs);
+    }
+    if (poles != NULL)
+    {
+        free(poles);
+    }
+    exit(0);
+}

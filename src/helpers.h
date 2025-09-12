@@ -30,14 +30,19 @@ void assign_to_range_array(
 void bfs(cell* flag);
 char assign_to_forced_then_second(cell* assignee, cell* assignor, int index);
 void remove_stair_from_cell(cell* receiver, cell* remove);
+void assign_bfs_neighbours_trivial();
+void assign_bfs_neighbour_trivial(cell* current_cell);
 void assign_bfs_neighbours();
 void assign_bfs_neighbour(cell* current_cell);
+void assign_dead_cells();
+void assign_dead_cell(cell* current_cell);
 void reset_flag_distances();
 void reset_flag_distance(cell* current_cell);
 void clear_bfs_neighbours();
 void clear_bfs_neighbour(cell* current_cell);
 void reset_visited_cells();
 void reset_visited_cell(cell* current_cell);
+void quit_game_safely();
 
 extern cell* maze[FLOORS][WIDTH][LENGTH];
 extern player players[NUMBER_OF_PLAYERS];
@@ -51,5 +56,6 @@ extern const int bawana_points[OPERATION_COUNT];
 extern const int bawana_duration[OPERATION_COUNT];
 
 extern cell* loop_link_cell;
+extern pole* poles;
 
 #endif

@@ -4,6 +4,8 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
+#define DEQUE_CAP 10000
+#define BFS_NEIGHBOURS 3
 #define NAME_FORMAT "[%1u, %1u, %02u]"
 #define STAIR_FORMAT "[%1u, %1u, %2u, %1u, %1u, %2u]"
 #define POLE_FORMAT "[%1u, %1u, %1u, %2u]"
@@ -75,7 +77,7 @@ typedef struct cell
     CELL_OPERATION movement_point_operation;
     char movement_point_operand;
     struct cell* neighbours[DIRECTION_COUNT]; //best neighbour will be FORCED
-    struct cell* bfs_neighbours[2]; //FORCED and SECOND only
+    struct cell* bfs_neighbours[BFS_NEIGHBOURS]; //FORCED and SECOND and NORTH==THIRD
     int n1;
     int n2;
     int distance_to_flag;
@@ -108,7 +110,7 @@ typedef struct
     CELL_OPERATION status_effect;
     unsigned char status_duration;
     unsigned int status_factor;
-    unsigned int movement_points;
+    int movement_points;
     unsigned char direction_dice;
     char name;
 } player;

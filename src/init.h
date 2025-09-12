@@ -11,6 +11,7 @@
 
 void init();
 void generate_map();
+void validate_map();
 void fill_section(
     int floor, 
     int width_start, 

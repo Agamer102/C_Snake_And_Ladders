@@ -11,8 +11,8 @@ void init()
     initialize_players();
     get_file_inputs();
     fix_neighbours();
-    assign_bfs_neighbours();
-    get_distances_to_flag();
+    add_poles_from_list();
+    validate_map();
     print_stairs();
     assign_movement_points();
     assign_bawana_cells();
@@ -97,6 +97,24 @@ void generate_map()
 }
 
 
+void validate_map()
+{
+    reset_flag_distances();
+    reset_visited_cells();
+    assign_bfs_neighbours_trivial();
+    bfs(flag);
+    assign_dead_cells();
+
+    //if the bawana entrance is dead, the maze is invalid
+    if (bawana_entrance->type == DEAD)
+    {
+        printf("ERROR: The flag is impossible to find in this configuration.\n");
+        print_maze();
+        quit_game_safely();
+    }
+}
+
+
 /*
 DEAD cells, are cells from which a player can never return back
 to the normal maze. This will hold true, even when the stair direction changes
@@ -104,24 +122,10 @@ as it's calculated using the ideal bidirectional stairs case.
 */
 void get_distances_to_flag()
 {
-    //we need to now reverse the edges of each cell in the map
-    //WARNING: do not call twice
-
-    //reverse_poles();
-    //execute pathfinding
-
-    printf("TRYING BFS");
     print_maze();
     bfs(flag);
-    printf("BFS OVER");
-
-    //undo_reverse_poles();
-
     //here now, we can apply cost of bawana start to bawana
     bawana_link_cell->distance_to_flag = bawana_entrance->distance_to_flag;
-
-    //for start link, it differs by player usually
-    //this should be handled more dynamically
 }
 
 
@@ -162,12 +166,16 @@ void add_poles_from_list()
     {
         pole current = poles[i];
 
+
         current.top_cell->type = POLE;
         current.top_cell->neighbours[FORCED] = current.bottom_cell;
+        //essential, a pole has ONLY forced, this logic is impreative
+        current.top_cell->neighbours[SECOND] = NULL;
         if (current.middle_cell != NULL)
         {
-            current.top_cell->type = POLE;
+            current.middle_cell->type = POLE;
             current.middle_cell->neighbours[FORCED] = current.bottom_cell;
+            current.middle_cell->neighbours[SECOND] = NULL;
         }
         //don't this may overwrite a stair pointer
         //current.bottom_cell->neighbours[FORCED] = NULL;
@@ -252,3 +260,4 @@ void get_game_block_array()
 {
     iterate_map((void *)&is_game_cell);
 }
+
