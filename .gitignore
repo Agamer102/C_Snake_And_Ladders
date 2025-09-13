@@ -6,3 +6,4 @@ a.out
 *.o
 *.s
 nm
+output.txt

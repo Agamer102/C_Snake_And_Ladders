@@ -17,11 +17,9 @@ extern cell* start_link_cell;
 extern cell* bawana_link_cell;
 
 void get_file_inputs();
-FILE* open_file(char* path);
 void seed_rand_function();
-int can_place_object(int floor, int width, int length, CELL_TYPE type);
-void add_valid_stairs();
-void add_valid_poles();
+void get_valid_stairs();
+void get_valid_poles();
 void add_valid_walls();
 void add_flag();
 

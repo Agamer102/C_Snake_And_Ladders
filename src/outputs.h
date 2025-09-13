@@ -6,6 +6,7 @@
 #include "settings.h"
 #include "types.h"
 
+void log_issue(ISSUE issue_type, CELL_TYPE cell_type, char fatal, char* given_name, char* resolution);
 void print_cell(cell *to_print);
 char* sprint_cell(cell* to_print);
 char* sprint_bawana_cell(CELL_OPERATION type);
@@ -38,5 +39,6 @@ void print_get_disoriented_message(player* p);
 void print_get_triggered_message(player* p);
 void print_get_happy_message(player* p);
 void print_get_bawana_points_message(player* p, int bonus);
-void print_found_flag_message(player* p);
+void print_found_flag_message(player* p, int turns);
+void print_player_captures_message(player* capturer, player* captured, cell* cell);
 #endif

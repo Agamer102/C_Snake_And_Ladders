@@ -43,6 +43,7 @@ void clear_bfs_neighbour(cell* current_cell);
 void reset_visited_cells();
 void reset_visited_cell(cell* current_cell);
 void quit_game_safely();
+void swap(int* a, int *b);
 
 extern cell* maze[FLOORS][WIDTH][LENGTH];
 extern player players[NUMBER_OF_PLAYERS];

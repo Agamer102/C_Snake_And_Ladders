@@ -240,7 +240,7 @@ void bfs(cell* flag)
             
             if (next == NULL) continue;
 
-            int cost = (dir == FORCED || dir == SECOND) ? 0: 1;
+            int cost = (dir == FORCED || dir == SECOND) ? 1: 100;
 
             //check if next is unvisited, or visited and the cost
             //is less than the current route
@@ -568,4 +568,12 @@ void quit_game_safely()
         free(poles);
     }
     exit(0);
+}
+
+
+void swap(int* a, int *b)
+{
+    int temp = *a;
+    *a = *b;
+    *a = temp;
 }

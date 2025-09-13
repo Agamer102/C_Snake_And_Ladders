@@ -30,6 +30,7 @@
 #define STAIR_MESSAGE_LENGTH 150
 #define DIRECTION_LENGTH 20
 #define UNREACHABLE_DISTANCE 10000
+#define FILE_PATH_LENGTH 100
 
 //colors to be used mainly for visualization only
 #define COLOR_GAME "\x1B[37m" //white
@@ -54,6 +55,7 @@ extern char* STAIRS_TXT;
 extern char* POLES_TXT;
 extern char* WALLS_TXT;
 extern char* FLAG_TXT;
+extern char* LOG_TXT;
 
 extern const int bawana_points[OPERATION_COUNT];
 extern const int bawana_duration[OPERATION_COUNT];

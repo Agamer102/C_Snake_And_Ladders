@@ -6,6 +6,7 @@ cell* game_cells[GAME_CELL_CAP];
 
 void init()
 {
+    refresh_log();
     seed_rand_function();
     generate_map();
     initialize_players();
@@ -19,6 +20,18 @@ void init()
     //printf("TYPE START: %i\n", start_link_cell->type);
     //printf("TYPE BAWANA: %i\n", bawana_link_cell->type);
     print_maze();
+}
+
+
+void refresh_log()
+{
+    FILE *f = fopen(LOG_TXT, "w");
+    if (f == NULL)
+    {
+        printf("Logfile could not be created.\n");
+        quit_game_safely();
+    }
+    fclose(f);
 }
 
 

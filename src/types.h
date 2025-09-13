@@ -6,6 +6,7 @@
 
 #define DEQUE_CAP 10000
 #define BFS_NEIGHBOURS 3
+#define PATH_DEPTH_V 200
 #define NAME_FORMAT "[%1u, %1u, %02u]"
 #define STAIR_FORMAT "[%1u, %1u, %2u, %1u, %1u, %2u]"
 #define POLE_FORMAT "[%1u, %1u, %1u, %2u]"
@@ -68,6 +69,21 @@ typedef enum
     RAN_OUT_OF_MOVEMENT_POINTS
 } MOVEMENT;
 
+
+typedef enum
+{
+    MEMORY_ALLOCATION_ERROR, //always an ERROR 
+    FILE_NOT_FOUND,
+    OUT_OF_MAZE_BOUNDS,
+    DEFINED_IN_VOID,
+    INVALID_FORMAT, //completely unusuable
+    NO_OBJECTS_ADDED,
+    INCORRECT_FORMAT, //can infer a correct object
+    TOO_MANY_OBJECTS,
+    INVALID_DEFINITION, //i.e pole to same floor, stair to same block
+    OBJECT_COLLISION, //i.e stair defined into wall
+} ISSUE;
+
 typedef struct cell
 {
     unsigned char floor;
@@ -97,6 +113,7 @@ typedef struct
 {
     MOVEMENT move_result;
     cell* moved_to;
+    int cost;
 } movement_packet;
 
 

@@ -11,31 +11,17 @@ void get_file_inputs()
     add_flag();
     seed_rand_function();
     add_valid_walls();
-    add_valid_stairs();
-    add_valid_poles();
-}
-
-//opens a requested file in inputs folder, 
-//also checks for errors
-FILE* open_file(char* path)
-{
-    FILE* f = fopen(path, "r");
-    
-    if (f == NULL)
-    {
-        printf("%s not found\n", path);
-        return NULL;
-    }
-    return f;
+    get_valid_stairs();
+    get_valid_poles();
 }
 
 
 void seed_rand_function()
 {
-    FILE* f = open_file(SEED_TXT);
+    FILE* f = fopen(SEED_TXT, "r");
     if (f == NULL)
     {
-        puts("Using random seed.");
+        log_issue(FILE_NOT_FOUND, GAME, 0, NULL, "Random seed was used.");
         srand(time(NULL));
         return;
     }
@@ -43,8 +29,8 @@ void seed_rand_function()
     unsigned int seed;
     if(fscanf(f, "%u", &seed) != 1)
     {
-        puts("seed.txt must contain an unsigned int on the first line.");
-        puts("using random seed.");
+        log_issue(INVALID_FORMAT, GAME, 0, NULL, "Random seed was used.");
+        fclose(f);
         srand(time(NULL));
         return;
     }
@@ -53,64 +39,13 @@ void seed_rand_function()
 }
 
 
-//checks if placing object at location violates any rules
-/*
-Rules for object placement:
-    1. Object MUST be in map bounds
-    2. Object MUST be on not empty cell
-    3. For the types (-> can be placed on):
-        Stair -> NOT WALL
-        Pole -> NOT WALL
-        Wall -> GAME 
-        Flag -> GAME
-
-NOTE: SPECIAL returns LINK_START or LINK_BAWANA if in those areas
-*/
-int can_place_object(int floor, int width, int length, CELL_TYPE type)
+//adds a malloced list of stairs
+void get_valid_stairs()
 {
-    if (!cell_in_maze_bounds(floor, width, length))
-    {
-        return 0;
-    }
-    //start cell special case
-    if (cell_in_start_area(floor, width, length))
-    {
-        return LINK_START;
-    }
-    //puts("Cell in bounds");
-    cell* current_cell = maze[floor][width][length];
-    //printf("%p\n", current_cell);
-    if (current_cell == NULL)
-    {
-        return 0;
-    }
-    //puts("Cell not NULL");
-    CELL_TYPE maze_cell_type = current_cell->type;
-    if (maze_cell_type == BAWANA)
-    {
-        return LINK_BAWANA;
-    }
-    switch (type)
-    {
-        case STAIR:
-            return (maze_cell_type != WALL);
-        case POLE:
-            return (maze_cell_type != WALL);
-        case WALL:
-            return (maze_cell_type == GAME);
-        case FLAG:
-            return (maze_cell_type == GAME);
-    }
-}
-
-
-//returns a malloced list of stairs, if no stairs returns NULL
-void add_valid_stairs()
-{
-    FILE *f = open_file(STAIRS_TXT);
+    FILE *f = fopen(STAIRS_TXT, "r");
     if (f == NULL)
     {
-        puts("No stairs will be added.");
+        log_issue(FILE_NOT_FOUND, STAIR, 0, NULL, "No stairs were added.");
         return;
     }
 
@@ -118,8 +53,8 @@ void add_valid_stairs()
     stair stair_list[STAIR_CAP];
     while (fgets(buff, sizeof(buff), f) != NULL)
     {
-        unsigned int start_floor, start_width, start_length;
-        unsigned int end_floor, end_width, end_length;
+        int start_floor, start_width, start_length;
+        int end_floor, end_width, end_length;
         int args = sscanf(
             buff, 
             STAIR_FORMAT, 
@@ -132,116 +67,85 @@ void add_valid_stairs()
         );
         if (args != 6)
         {
-            printf("Stair %s is formatted incorrectly.\n", buff);
+            log_issue(INVALID_FORMAT, STAIR, 0, buff, "Stair was not added.");
+            continue;
         }
         // check for invalid stairs, by definition
         if (start_floor >= end_floor)
         {
-            printf("Stair %s should be defined from lower to higher floor\n", buff);
+            log_issue(INCORRECT_FORMAT, STAIR, 0, buff, "A correct format was assumed for stair.");
+            swap(&start_floor, &end_floor);
+            swap(&start_width, &end_width);
+            swap(&start_length, &end_length);
+        }
+
+        if (
+            !cell_in_maze_bounds(start_floor, start_width, start_length) ||
+            !cell_in_maze_bounds(end_floor, end_width, end_length)
+        )
+        {
+            log_issue(OUT_OF_MAZE_BOUNDS, STAIR, 0, buff, "Stair was not added.");
             continue;
         }
 
-        int start_return_value = can_place_object(start_floor, start_width, start_length, STAIR);
-        int end_return_value = can_place_object(end_floor, end_width, end_length, STAIR);
+        cell* start_cell = maze[start_floor][start_width][start_length];
+        cell* end_cell = maze[end_floor][end_width][end_length];
 
-        // check for invalid stairs, by out of bounds
-        if (!start_return_value || !end_return_value)
-        {
-            printf("Invalid stair %s\n", buff);
-            continue;        
-        }
-        cell* start_cell; //= maze[start_floor][start_width][start_length];
-        cell* end_cell; //= maze[end_floor][end_width][end_length];
-
-        //process links now
-        //only need to check lower floor, as that's the only place with bawana and start
-        if (start_return_value == LINK_START)
+        //start cell is the bottom cell and can be bawana or start
+        if (cell_in_start_area(start_floor, start_width, start_length))
         {
             start_cell = start_link_cell;
         }
-        else if (start_return_value == LINK_BAWANA)
+
+        if (start_cell == NULL || end_cell == NULL)
+        {
+            log_issue(DEFINED_IN_VOID, STAIR, 0, buff, "Stair was not added.");
+            continue;
+        }
+
+        if (start_cell->type == BAWANA)
         {
             start_cell = bawana_link_cell;
         }
-        else
-        {
-            start_cell = maze[start_floor][start_width][start_length];
-        }
 
-        end_cell = maze[end_floor][end_width][end_length];
-
-        //new logic using function
-        //step-by-step to avoid doubling
-        char start_status = assign_to_forced_then_second(start_cell, end_cell, stair_count);
-        if (!start_status)
-        {
-            printf("Only two stairs may be defined for a cell.\n");
-            printf("Stair %s has been discarded", buff);
-            continue;
-        }
-
-        char end_status = assign_to_forced_then_second(end_cell, start_cell, stair_count);
-        if (!end_status)
-        {
-            printf("Only two stairs may be defined for a cell.\n");
-            printf("Stair %s has been discarded", buff);
-            //must reset start, otherwise remnants may remain
-            if (start_status == 'F') start_cell->neighbours[FORCED] == NULL;
-            if (start_status == 'S') start_cell->neighbours[SECOND] == NULL;
-            continue;
-        }
-
-        /*
-        // check for 2 staircases case
         if (
-            start_cell->neighbours[FORCED] != NULL &&
-            start_cell->neighbours[SECOND] != NULL 
-            ||
-            end_cell->neighbours[FORCED] != NULL &&
-            end_cell->neighbours[SECOND] != NULL
+            (start_cell->type != GAME && start_cell->type != LINK_BAWANA && start_cell->type != STAIR && start_cell->type != LINK_START) ||
+            (end_cell->type != GAME && end_cell->type != STAIR)
         )
         {
-            printf("Only two stairs may be defined for a cell.\n");
-            printf("Stair %s has been discarded", buff);
+            log_issue(OBJECT_COLLISION, STAIR, 0, buff, "Stair was not added.");
             continue;
         }
-
-
-        // add the stair to starting cell
-        if (start_cell->neighbours[FORCED] == NULL)
+        char ret_s = assign_to_forced_then_second(start_cell, end_cell, stair_count);
+        if (ret_s == 0)
         {
-            start_cell->neighbours[FORCED] = end_cell;
-            start_cell->n1 = stair_count;
+            log_issue(TOO_MANY_OBJECTS, STAIR, 0, buff, "Stair was not added.");
+            continue;
         }
-        else
+        char ret_e = assign_to_forced_then_second(end_cell, start_cell, stair_count);
+        if (ret_e == 0)
         {
-            start_cell->neighbours[SECOND] = end_cell;
-            start_cell->n2 = stair_count;
+            log_issue(TOO_MANY_OBJECTS, STAIR, 0, buff, "Stair was not added.");
+            //undo previous assignment
+            if (ret_s == 'F')
+            {
+                start_cell->neighbours[FORCED] = NULL;
+            }
+            else if (ret_s == 'S')
+            {
+                start_cell->neighbours[SECOND] = NULL;
+            }
         }
-
-        // add the stair to ending cell
-        if (end_cell->neighbours[FORCED] == NULL)
-        {
-            end_cell->neighbours[FORCED] = start_cell;
-            end_cell->n1 = stair_count;
-        }
-        else
-        {
-            end_cell->neighbours[FORCED] = start_cell;
-            end_cell->n2 = stair_count;
-        }
-        
-
-        // fix cell types
-        //edge case 
-        if (start_return_value == 1)
+        //just add the stair here as well
+        if (start_cell->type == GAME)     
         {
             start_cell->type = STAIR;
+        }    
+        if (end_cell->type == GAME)
+        {
+            end_cell->type = STAIR;
         }
-        end_cell->type = STAIR;
-        */
 
-        // add stair to stair list
         stair current_stair = (stair){start_cell, end_cell, BIDIRECTIONAL};
         stair_list[stair_count++] = current_stair;
     }
@@ -250,7 +154,7 @@ void add_valid_stairs()
     // handle no stairs edge case
     if (stair_count < 1)
     {
-        puts("No stairs added to game.");
+        log_issue(NO_OBJECTS_ADDED, STAIR, 0, NULL, NULL);
         return;
     }
 
@@ -260,10 +164,8 @@ void add_valid_stairs()
     //handle malloc fail
     if (stairs == NULL)
     {
-        puts("Failed to alloc stairs.");
-        puts("Quitting game");
-        free_map();
-        exit(-1);
+        log_issue(MEMORY_ALLOCATION_ERROR, STAIR, 1, NULL, NULL);
+        return;
     }
 
     for (int stair_index = 0; stair_index < stair_count; stair_index++)
@@ -273,12 +175,12 @@ void add_valid_stairs()
 }
 
 
-void add_valid_poles()
+void get_valid_poles()
 {
-    FILE *f = open_file(POLES_TXT);
+    FILE *f = fopen(POLES_TXT, "r");
     if (f == NULL)
     {
-        puts("No poles will be added.");
+        log_issue(FILE_NOT_FOUND, POLE, 0, NULL, "No poles were added.");
         return;
     }
 
@@ -298,77 +200,95 @@ void add_valid_poles()
         );
         if (args != 4)
         {
-            printf("Pole %s is formatted incorrectly.\n", buff);
+            log_issue(INVALID_FORMAT, POLE, 0, buff, "Pole was not added.");
             continue;
         }
 
         //check for pole validity
         if (start_floor == end_floor)
         {
-            printf("Poles %s must be defined from/to different floors.\n", buff);
+            log_issue(INVALID_DEFINITION, POLE, 0, buff, "Pole was not added.");
             continue;
         }
 
         int top_floor = MAX(start_floor, end_floor);
         int bottom_floor = MIN(start_floor, end_floor);
-
-        int top_return_value = can_place_object(start_floor, width, length, POLE);
-        int bottom_return_value = can_place_object(end_floor, width, length, POLE);
-
-        if (!top_return_value || !bottom_return_value)
+        if (
+            !cell_in_maze_bounds(start_floor, width, length) ||
+            !cell_in_maze_bounds(end_floor, width, length)
+        )
         {
-            //handle edge case where pole defined from 
-            //illegal location, to intersect a legal location
-            if (top_floor - bottom_floor == 2 && can_place_object(1, width, length, POLE))
+            log_issue(OUT_OF_MAZE_BOUNDS, STAIR, 0, buff, "Pole was not added.");
+            continue;
+        }
+
+        cell* top_cell = maze[top_floor][width][length];
+        cell* bottom_cell = maze[bottom_floor][width][length];
+        //bottom cell edge case first
+        if (bottom_cell == NULL)
+        {
+            if (cell_in_start_area(bottom_floor, width, length))
             {
-                top_floor = 1;
+                bottom_cell = start_link_cell;
             }
             else
-            {            
-                printf("%i\n", can_place_object(1, width, length, POLE));
-                printf("Pole %s is invalid.\n", buff);
+            {
+                log_issue(DEFINED_IN_VOID, POLE, 0, buff, "Pole was not added.");
                 continue;
             }
         }
+        else if (bottom_cell->type == BAWANA)
+        {
+            bottom_cell = bawana_link_cell;
+        }
+
+        if (top_cell == NULL)
+        {
+            if (top_floor - bottom_floor == 2)
+            {
+                top_cell = maze[1][width][length];
+                if (top_cell == NULL)
+                {
+                    log_issue(DEFINED_IN_VOID, POLE, 0, buff, "Pole was not added.");
+                    continue;
+                }
+                log_issue(DEFINED_IN_VOID, POLE, 0, buff, "Attempting to add pole from floor 1.");
+            }
+            else
+            {
+                log_issue(DEFINED_IN_VOID, POLE, 0, buff, "Pole was not added.");
+                continue;
+            }
+        }
+
+        if (
+            (top_cell->type != GAME && top_cell->type != STAIR) ||
+            (bottom_cell->type != GAME && bottom_cell->type != STAIR && bottom_cell->type != LINK_BAWANA && bottom_cell->type != LINK_START)
+        )
+        {
+            log_issue(OBJECT_COLLISION, POLE, 0, buff, "Pole was not added.");
+            continue;
+        }
+
         pole to_add;
-
-        cell* top_cell; //= maze[top_floor][width][length];
-        cell* bottom_cell; //= maze[bottom_floor][width][length];
-
-        //process links
-        //NOTE: only bottom cell can be bawana or start
-        if (bottom_return_value == LINK_START)
-        {
-            bottom_cell = start_link_cell;
-        }
-        else if (bottom_return_value == LINK_BAWANA)
-        {
-            bottom_cell = start_link_cell;
-        }
-        else
-        {
-            bottom_cell = maze[bottom_floor][width][length];
-        }
-        top_cell = maze[top_floor][width][length];
 
         to_add.bottom_cell = bottom_cell;
         to_add.top_cell = top_cell;
+
         //if middle cell exists, add that cell as a separete pole
-        if (top_floor - bottom_floor == 2 && can_place_object(1, width, length, POLE))
+        if (top_floor - bottom_floor == 2)
         {
             cell* middle_cell = maze[1][width][length];
-            middle_cell->type = POLE;
-            middle_cell->neighbours[FORCED] = bottom_cell;
-            middle_cell->neighbours[SECOND] = NULL;
+            if (middle_cell == NULL)
+            {
+                continue;
+            }
+            else if (middle_cell->type == WALL)
+            {
+                continue;
+            }
             to_add.middle_cell = middle_cell;
-            //puts("MIDDLE CELL");
-            //print_cell(middle_cell);
         }
-        //puts("TOP CELL");
-        //print_cell(top_cell);
-        top_cell->type = POLE;
-        top_cell->neighbours[FORCED] = bottom_cell;
-        top_cell->neighbours[SECOND] = NULL;
 
         pole_list[pole_count++] = to_add;
     }
@@ -377,7 +297,7 @@ void add_valid_poles()
     // handle no poles edge case
     if (pole_count < 1)
     {
-        puts("No poles added to game.");
+        log_issue(NO_OBJECTS_ADDED, POLE, 0, NULL, "No poles were added.");
         return;
     }
 
@@ -387,11 +307,8 @@ void add_valid_poles()
     //handle malloc fail
     if (poles == NULL)
     {
-        puts("Failed to alloc poles.");
-        puts("Quitting game");
-        free_map();
-        free(stairs);
-        exit(-1);
+        log_issue(MEMORY_ALLOCATION_ERROR, POLE, 1, NULL, NULL);
+        return;
     }
 
     for (int pole_index = 0; pole_index < pole_count; pole_index++)
@@ -404,10 +321,10 @@ void add_valid_poles()
 
 void add_valid_walls()
 {
-    FILE *f = open_file(WALLS_TXT);
+    FILE *f = fopen(WALLS_TXT, "r");
     if (f == NULL)
     {
-        puts("No additional walls will be added.");
+        log_issue(FILE_NOT_FOUND, WALL, 0, NULL, "No walls were added.");
         return;
     }
 
@@ -427,7 +344,7 @@ void add_valid_walls()
         );
         if (args != 5)
         {
-            printf("Wall %s is formatted incorrectly.\n", buff);
+            log_issue(INVALID_FORMAT, WALL, 0, buff, "Wall was not added.");
             continue;
         }
 
@@ -437,11 +354,9 @@ void add_valid_walls()
             start_length == end_length)
         )
         {
-            printf("Wall %s is illegally defined.\n", buff);
-            continue;
+            log_issue(INVALID_DEFINITION, WALL, 0, buff, "Wall was not added.");
         }
 
-        int valid = 1;
         if (start_width == end_width)
         {                
             int s_length = MIN(start_length, end_length);
@@ -449,15 +364,16 @@ void add_valid_walls()
             //iterate over each wall cell, to ensure it is valid
             for (int i = s_length ; i <= l_length ; i++)
             {
-                if (!can_place_object(floor, start_width, i, WALL))
+                if (!cell_in_maze_bounds(floor, start_width, i))
                 {
-                    valid = 0;
+                    log_issue(OUT_OF_MAZE_BOUNDS, WALL, 0, buff, "Wall was not added.");
+                    continue;
                 }
-            }
-            if (valid == 0)
-            {
-                printf("Wall %s is invalid.\n", buff);
-                continue;
+                else if (maze[floor][start_width][i]->type != GAME)
+                {
+                    log_issue(OBJECT_COLLISION, WALL, 0, buff, "Wall was not added.");
+                    continue;
+                }
             }
             fill_section(floor, start_width, s_length, start_width, l_length, WALL);
         }
@@ -468,15 +384,16 @@ void add_valid_walls()
             //iterate over each wall cell, to ensure it is valid
             for (int i = s_width; i<= l_width; i++)
             {
-                if (!can_place_object(floor, i, start_length, WALL))
+                if (!cell_in_maze_bounds(floor, i, start_length))
                 {
-                    valid = 0;
+                    log_issue(OUT_OF_MAZE_BOUNDS, WALL, 0, buff, "Wall was not added.");
+                    return;
                 }
-            }
-            if (valid == 0)
-            {
-                printf("Wall %s is invalid.\n", buff);
-                continue;
+                else if (maze[floor][i][start_length]->type != GAME)
+                {
+                    log_issue(OBJECT_COLLISION, WALL, 0, buff, "Wall was not added.");
+                    return;
+                }
             }
             fill_section(floor, s_width, start_length, l_width, start_length, WALL);
         }
@@ -489,13 +406,11 @@ void add_valid_walls()
 //NOTE: this function should be called first
 void add_flag()
 {
-    FILE *f = open_file(FLAG_TXT);
+    FILE *f = fopen(FLAG_TXT, "r");
     if (f == NULL)
     {
-        printf("ERROR: Unable to locate flag.txt\n");
-        puts("Quitting game.");
-        free_map();
-        exit(-1);
+        log_issue(FILE_NOT_FOUND, FLAG, 1, NULL, "Quitting game.");
+        return;
     }
     char buff[100];
     //puts("Trying to add flag");
@@ -512,28 +427,31 @@ void add_flag()
         //puts("Scanned flag");
         if (args != 3)
         {
-            printf("ERROR: Flag %s is invalidly formatted.\n", buff);
-            puts("Quitting game.");
-            free_map();
-            exit(-1);
+            log_issue(INVALID_FORMAT, FLAG, 1, buff, "Quitting game.");
+            return;
         }
 
-        if (!can_place_object(floor, width, length, FLAG))
+        if (!cell_in_maze_bounds(floor, width, length))
         {
-            printf("ERROR: Flag %s is illegally defined.\n", buff);
-            puts("Quitting game.");
-            free_map();
-            exit(-1);
+            log_issue(OUT_OF_MAZE_BOUNDS, FLAG, 1, buff, "Quitting game.");
+            return;
         }
         flag = maze[floor][width][length];
+        if (flag == NULL)
+        {
+            log_issue(DEFINED_IN_VOID, FLAG, 1, buff, "Quitting game.");
+            return;
+        }
+        else if (flag->type != GAME)
+        {
+            log_issue(OBJECT_COLLISION, FLAG, 1, buff, "Quitting game.");
+            return;
+        }
         flag->type = FLAG;
     }
     else
     {
-        printf("ERROR: Flag must be defined.\n");
-        puts("Quitting game.");
-        free_map();
-        exit(-1);
+        log_issue(INVALID_DEFINITION, FLAG, 1, NULL, "Quitting game.");
     }
     fclose(f);
     

@@ -1,5 +1,89 @@
 #include "outputs.h"
 
+//error handling
+void log_issue(ISSUE issue_type, CELL_TYPE cell_type, char fatal, char* given_name, char* resolution)
+{
+    FILE* log = fopen(LOG_TXT, "a");
+    //if logfile itself is an issue
+    if (log == NULL)
+    {
+        printf("FATAL ERROR.\n");
+        printf("Unable to open log.txt, quitting game.");
+        quit_game_safely();
+    }
+
+    char file_name[FILE_PATH_LENGTH];
+    switch (cell_type)
+    {
+        case STAIR:
+            strcpy(file_name, STAIRS_TXT);
+            break;
+        case POLE:
+            strcpy(file_name, POLES_TXT);
+            break;
+        case WALL:
+            strcpy(file_name, WALLS_TXT);
+            break;
+        case FLAG:
+            strcpy(file_name, FLAG_TXT);
+            break;
+        default:
+            strcpy(file_name, "");
+            break;
+    }
+
+    if (fatal)
+    {
+        printf("FATAL ERROR.\n");
+        fprintf(log, "ERROR: ");
+    }
+    switch (issue_type)
+    {
+        case MEMORY_ALLOCATION_ERROR:
+            fprintf(log, "ERROR: Memory allocation for %s failed.\n", file_name);
+            quit_game_safely();
+            break;
+        case FILE_NOT_FOUND:
+            fprintf(log, "File %s was not found.", file_name);
+            break;
+        case OUT_OF_MAZE_BOUNDS:
+            fprintf(log, "Object %s in %s is defined out of maze bounds.", given_name, file_name);
+            break;
+        case DEFINED_IN_VOID:
+            fprintf(log, "Object %s in %s defined to/from an empty cell.", given_name, file_name);
+            break;
+        case INVALID_FORMAT:
+            fprintf(log, "%s in %s was in an invalid format.", given_name, file_name);
+            break;
+        case NO_OBJECTS_ADDED:
+            fprintf(log, "No objects added for %s.", file_name);
+            break;
+        case INCORRECT_FORMAT:
+            fprintf(log, "Object %s in %s was incorrectly defined.", given_name, file_name);
+            break;
+        case TOO_MANY_OBJECTS:
+            fprintf(log, "Object %s in %s defines too many objects to a single cell.", given_name, file_name);
+            break;
+        case INVALID_DEFINITION:
+            fprintf(log, "Object %s in %s's definition is invalid.", given_name, file_name);
+            break;
+        case OBJECT_COLLISION:
+            fprintf(log, "Object %s in %s collided with another object.", given_name, file_name);
+            break;
+    }
+    if (resolution)
+    {
+        fprintf(log, " %s", resolution);
+    }
+    fprintf(log, "\n");
+    fclose(log);
+    if (fatal)
+    {
+        quit_game_safely();
+    }
+}
+
+
 // prints a given cell in expected output to std output
 void print_cell(cell *to_print)
 {
@@ -139,10 +223,10 @@ void print_maze()
                     case LINK_LOOP:
                     case LINK_BAWANA:
                     case LINK_START:
-                        printf(" L ");
+                        printf(" %i ", current_cell->distance_to_flag);
                         break;
                     case GAME:
-                        printf(COLOR_GAME " G " RESET);
+                        printf(COLOR_GAME " %i " RESET, current_cell->distance_to_flag);
                         break;
                     case START:
                         printf(COLOR_START " @ " RESET);
@@ -151,10 +235,10 @@ void print_maze()
                         printf(COLOR_WALL " W " RESET);
                         break;
                     case POLE:
-                        printf(COLOR_POLE " P " RESET);
+                        printf(COLOR_POLE " %i " RESET, current_cell->distance_to_flag);
                         break;
                     case STAIR:
-                        printf(COLOR_STAIR " S " RESET);
+                        printf(COLOR_STAIR " %i " RESET, current_cell->distance_to_flag);
                         break;
                     case FLAG:
                         printf(COLOR_FLAG " F " RESET);
@@ -255,10 +339,19 @@ void print_triggered_wears_off(player* p)
 
 void print_pole_message(player* p, cell* pole_cell, cell* next_cell)
 {
-    char pole_name[NAME_LENGTH];
-    char next_name[NAME_LENGTH];
+    char pole_name[NAME_LENGTH + 10];
+    char next_name[NAME_LENGTH + 10];
     strcpy(pole_name, sprint_cell(pole_cell));
     strcpy(next_name, sprint_cell(next_cell));
+    //edge case
+    if(next_cell->type == LINK_START)
+    {
+        strcpy(next_name, "starting area");
+    }
+    if (next_cell->type == LINK_BAWANA)
+    {
+        strcpy(next_name, "bawana area");
+    }
     printf
     (
         "%c lands on %s which is a pole cell.\n %c slides down and now placed at %s in floor %u.\n",
@@ -269,10 +362,18 @@ void print_pole_message(player* p, cell* pole_cell, cell* next_cell)
 
 void print_stair_message(player* p, cell* stair_cell, cell* next_cell)
 {
-    char stair_name[NAME_LENGTH];
-    char next_name[NAME_LENGTH];
+    char stair_name[NAME_LENGTH + 10];
+    char next_name[NAME_LENGTH + 10];
     strcpy(stair_name, sprint_cell(stair_cell));
     strcpy(next_name, sprint_cell(next_cell));
+    if(next_cell->type == LINK_START)
+    {
+        strcpy(next_name, "starting area");
+    }
+    if (next_cell->type == LINK_BAWANA)
+    {
+        strcpy(next_name, "bawana area");
+    }
     printf
     (
         "%c lands on %s which is a stair cell. %c takes the stairs and now placed at %s in floor %i.\n",
@@ -326,7 +427,7 @@ void print_effect_movement_message(player *p, unsigned char dice, DIRECTION dir)
                 printf
                 (
                     "%c is triggered and rolls and %u on the movement dice and move in the %s and moves %u cells and is placed at the %s.\n",
-                    p->name, dice / 2, p_direction, dice * 2, sprint_cell(p->location)
+                    p->name, dice / 2, p_direction, dice, sprint_cell(p->location)
                 );
             }
             else
@@ -491,7 +592,16 @@ void print_get_bawana_points_message(player* p, int bonus)
 }
 
 
-void print_found_flag_message(player* p)
+void print_found_flag_message(player* p, int turns)
 {
-    printf("%c finds the flag and wins !\n", p->name);
+    printf("%c finds the flag on turn %i and wins !\n", p->name, turns);
+}
+
+
+void print_player_captures_message(player* capturer, player* captured, cell* cell)
+{
+    printf(
+        "%c captures %c on %s. %c is now moved to the starting area.\n",
+        capturer->name, captured->name, sprint_cell(cell), captured->name
+    );
 }

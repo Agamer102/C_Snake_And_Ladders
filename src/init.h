@@ -10,6 +10,7 @@
 #include "settings.h"
 
 void init();
+void refresh_log();
 void generate_map();
 void validate_map();
 void fill_section(

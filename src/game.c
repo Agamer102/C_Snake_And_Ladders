@@ -25,6 +25,12 @@ cell* loop_link_cell = NULL;
 void play_game()
 {
     init();
+    for (DIRECTION dir = 0; dir < DIRECTION_COUNT; dir++)
+    {
+        bawana_link_cell->neighbours[dir] = NULL;
+        start_link_cell->neighbours[dir] = NULL;
+        loop_link_cell->neighbours[dir] = NULL;
+    }
     recalculate_distances_to_flag();
     print_maze();
     do
@@ -34,6 +40,12 @@ void play_game()
         {
             randomize_stair_direction();
             add_poles_from_list();
+            for (DIRECTION dir = 0; dir < DIRECTION_COUNT; dir++)
+            {
+                bawana_link_cell->neighbours[dir] = NULL;
+                start_link_cell->neighbours[dir] = NULL;
+                loop_link_cell->neighbours[dir] = NULL;
+            }
             recalculate_distances_to_flag();
             //print_maze();
             //print_stairs();
@@ -47,8 +59,9 @@ void recalculate_distances_to_flag()
     clear_bfs_neighbours();
     reset_flag_distances();
     reset_visited_cells();
-    assign_bfs_neighbours();
+    assign_bfs_neighbours_trivial();
     bfs(flag);
+    bawana_link_cell->distance_to_flag = bawana_entrance->distance_to_flag;
 }
 
 
@@ -232,7 +245,7 @@ void handle_effect_movement(player* current_player, unsigned char dice, DIRECTIO
         {
             case STAIR:
             case POLE:
-                movement_packet mov = move_from_stair_pole(current_player, next);
+                movement_packet mov = move_from_stair_pole(current_player, next, 1);
                 status = mov.move_result;
                 next = mov.moved_to;
             case GAME:
@@ -254,7 +267,12 @@ void handle_effect_movement(player* current_player, unsigned char dice, DIRECTIO
                 dice_m--;
                 break;
             case BAWANA:
+            case LINK_BAWANA:
                 status = FELL_TO_BAWANA;
+                break;
+            case START:
+            case LINK_START:
+                status = FELL_TO_START;
                 break;
             case DEAD:
                 status = FELL_TO_DEAD;
@@ -292,6 +310,19 @@ void handle_effect_movement(player* current_player, unsigned char dice, DIRECTIO
             }
             else
             {
+                //check for captures
+                for (int i = 0; i < NUMBER_OF_PLAYERS; i++)
+                {
+                    if (players[i].name != current_player->name)
+                    {
+                        if (players[i].location == next)
+                        {
+                            players[i].location = players[i].start;
+                            print_player_captures_message(current_player, &players[i], next);
+                        }
+                    }
+                }
+                current_player->from = current_player->location;
                 current_player->location = next;
                 current_player->movement_points += net_movement_points;
                 print_effect_movement_message(current_player, dice, dir);
@@ -299,7 +330,7 @@ void handle_effect_movement(player* current_player, unsigned char dice, DIRECTIO
                 return;
             }
         case FOUND_FLAG:
-            print_found_flag_message(current_player);
+            print_found_flag_message(current_player, game_ticks);
             quit_game_safely();
             return;
         case HIT_WALL:       
@@ -381,7 +412,7 @@ MOVEMENT move_to_game(cell* to_move_to)
 
 //NOTE, this function affects values in maze
 //It is IMPERATIVE that it resets the values correctly
-movement_packet move_from_stair_pole(player* p, cell* start)
+movement_packet move_from_stair_pole(player* p, cell* start, char output)
 {
     //printf("TRYING STAIR/POLE MOVEMENT.\n");
     cell* next = start;
@@ -405,33 +436,35 @@ movement_packet move_from_stair_pole(player* p, cell* start)
         cell* second = next->neighbours[SECOND];
 
         //trivial cases
-        if (forced == NULL)
+        if (forced == NULL || second == NULL)
         {
-            next = second;
-            continue;
-        }
-        if (second == NULL)
-        {
-            next = forced;
+            next = (forced != NULL) ? forced : second;
             continue;
         }
 
         //visited case, pick other one
         //prevents bidirectional looping
-        if (forced->visited)
+        if (forced->visited && !second->visited) { next = second; continue;}
+        if (second->visited && !forced->visited) { next = forced; continue;}
+        if (forced->visited && second->visited)
         {
-            next = second;
-            continue;
-        }
-        if (second->visited)
-        {
-            next = forced;
-            continue;
+            //loop
+            path_result = FELL_TO_LOOP;
+            break;
         }
 
         int forced_cost = forced->distance_to_flag;
         int second_cost = second->distance_to_flag;
-    
+
+        if (forced->type == LINK_START)
+        {
+            forced_cost = p->start->distance_to_flag;
+        }
+        if (second->type == LINK_START)
+        {
+            forced_cost = p->start->distance_to_flag;
+        }
+
 
         if (forced_cost < second_cost)
         {
@@ -445,24 +478,37 @@ movement_packet move_from_stair_pole(player* p, cell* start)
         }
         else
         {
-            //complicated problem, is this particular one
-            //simple priority to node on flag
-            if (forced->floor == flag->floor)
+            if (forced == second)
             {
                 next = forced;
                 continue;
             }
-            else if (second->floor = flag->floor)
+            movement_packet forced_c = move_from_stair_pole(p, forced, 0);
+            movement_packet second_c = move_from_stair_pole(p, second, 0);
+            if (forced_c.move_result == SUCCESS && second_c.move_result == SUCCESS)
+            {
+                if (forced_c.cost <= second_c.cost)
+                {
+                    next = forced;
+                    continue;
+                }
+                else
+                {
+                    next = second;
+                    continue;
+                }
+            }
+            if (forced_c.move_result == SUCCESS)
+            {
+                next = forced;
+                continue;
+            }
+            if (second_c.move_result == SUCCESS)
             {
                 next = second;
                 continue;
             }
-            else
-            {
-                next = rand() % 2 == 0 ? forced : second;
-                continue;
-            }
-
+            break;
         }
     }
 
@@ -475,6 +521,7 @@ movement_packet move_from_stair_pole(player* p, cell* start)
     if (next == NULL)
     {
         //printf("LOGIC ERROR.\n");
+        path_result = FELL_TO_DEAD;
     }
 
 
@@ -482,24 +529,96 @@ movement_packet move_from_stair_pole(player* p, cell* start)
     {
         case SUCCESS:
             //path is now valid, print the path the player took
-            visited_cells[visited_n++] = next;
-            for (int i = 0; i < visited_n - 1; i++)
+            if (output == 1)
             {
-                cell* vis = visited_cells[i];
+                visited_cells[visited_n++] = next;
+                for (int i = 0; i < visited_n - 1; i++)
+                {
+                    cell* vis = visited_cells[i];
 
-                if (vis->type == STAIR)
-                {
-                    print_stair_message(p, vis, visited_cells[i + 1]);
-                }
-                else if (vis->type == POLE)
-                {
-                    print_pole_message(p, vis, visited_cells[i + 1]);
+                    if (vis->type == STAIR)
+                    {
+                        print_stair_message(p, vis, visited_cells[i + 1]);
+                    }
+                    else if (vis->type == POLE)
+                    {
+                        print_pole_message(p, vis, visited_cells[i + 1]);
+                    }
                 }
             }
-            return (movement_packet) {SUCCESS, next};
+            return (movement_packet) {SUCCESS, next, next->distance_to_flag};
         default:
-            return (movement_packet) {path_result, next};
+            return (movement_packet) {path_result, next, next->distance_to_flag};
             
+    }
+}
+
+
+movement_packet move_from_stair_pole_new(player* p, cell* start, char output)
+{
+    int base_cost = start->distance_to_flag;
+    cell* next;
+    if (start->type == POLE)
+    {
+        next = start->neighbours[FORCED];
+    }
+    else
+    {
+        if (start->neighbours[FORCED] && start->neighbours[SECOND])
+        {
+            next = start;
+        }
+        else if (start->neighbours[FORCED])
+        {
+            next = start->neighbours[FORCED];
+            print_stair_message(p, start, next);
+        }
+        else if (start->neighbours[SECOND])
+        {
+            next = start->neighbours[SECOND];
+            print_stair_message(p, start, next);
+        }
+    }
+
+    movement_packet mov = (movement_packet) {FELL_TO_DEAD, NULL};
+    while (next != NULL && (next->type == STAIR || next->type == POLE))
+    {
+        cell* forced = next->neighbours[FORCED];
+        cell* second = next->neighbours[SECOND];
+
+        if (!forced && !second)
+        {
+            break;
+        }
+        
+        if (forced && forced->distance_to_flag < base_cost)
+        {
+            if (next->type == POLE)
+            {
+                print_pole_message(p, next, forced);
+            }
+            else
+            {
+                print_stair_message(p, next, forced);
+            }
+            next = forced;
+            continue;
+        }
+        if (second && second->distance_to_flag < base_cost)
+        {
+            print_stair_message(p, next, second);
+            next = second;
+            continue;
+        }
+        break;
+    }
+    if (next)
+    {
+        return (movement_packet) {SUCCESS, next};
+    }
+    else
+    {
+        return (movement_packet) {SUCCESS, start};
     }
 }
 
@@ -513,7 +632,7 @@ void transport_to_bawana(player* current_player, int food_poisoned)
     print_placed_in_bawana_message(current_player, op, food_poisoned);
 
     //fix player's status
-    current_player->from = current_player->location;
+    current_player->from = to_move_to;
     current_player->location = bawana_entrance;
     current_player->status_effect = op;
     current_player->status_duration = bawana_duration[op];
