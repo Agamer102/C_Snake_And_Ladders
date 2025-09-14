@@ -10,6 +10,18 @@ void log_issue(ISSUE issue_type, CELL_TYPE cell_type, char fatal, char* given_na
         printf("ERROR: Unable to open log.txt, quitting game.\n");
         quit_game_safely();
     }
+    if (given_name)
+    {
+        //get rid of /n
+        int len = strlen(given_name);
+        if (len >= 1)
+        {
+            if (given_name[len-1] == '\n')
+            {
+                given_name[len-1] = '\0';
+            }
+        }
+    }
 
     char file_name[FILE_PATH_LENGTH];
     switch (cell_type)
