@@ -88,28 +88,18 @@ typedef enum
 
 typedef struct cell
 {
+    CELL_TYPE type;
+    CELL_OPERATION movement_point_operation;
+    struct cell* neighbours[DIRECTION_COUNT]; //best neighbour will be FORCED
+    struct cell* bfs_neighbours[BFS_NEIGHBOURS]; //FORCED and SECOND and NORTH==THIRD
+    int distance_to_flag;
+    int visited;
     unsigned char floor;
     unsigned char width;
     unsigned char length;
-    CELL_TYPE type;
-    CELL_OPERATION movement_point_operation;
     char movement_point_operand;
-    struct cell* neighbours[DIRECTION_COUNT]; //best neighbour will be FORCED
-    struct cell* bfs_neighbours[BFS_NEIGHBOURS]; //FORCED and SECOND and NORTH==THIRD
-    int n1;
-    int n2;
-    int distance_to_flag;
-    int visited;
 } cell;
-//n1, n2 is set by default to -1 and are used
-/*
-GAME: -1
-STAIR: stair#1, stair#2
-POLE: -1
-START: -1
-WALL: -1
-BAWANA: 
-*/
+
 
 typedef struct
 {
@@ -126,9 +116,9 @@ typedef struct
     DIRECTION start_direction;
     DIRECTION current_direction;
     CELL_OPERATION status_effect;
-    unsigned char status_duration;
     unsigned int status_factor;
     int movement_points;
+    unsigned char status_duration;
     unsigned char direction_dice;
     char name;
 } player;

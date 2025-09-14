@@ -4,12 +4,8 @@
 
 const cell empty_cell =
 {
-    255,
-    255,
-    255,
     GAME,
     ADD,
-    0,
     {
         NULL,
         NULL,
@@ -20,11 +16,14 @@ const cell empty_cell =
     },
     {
         NULL,
+        NULL,
         NULL
     },
-    -1,
-    -1,
     UNREACHABLE_DISTANCE,
+    0,
+    255,
+    255,
+    255,
     0
 };
 
@@ -279,7 +278,6 @@ char assign_to_forced_then_second(cell* assignee, cell* assignor, int index)
     )
     {
         assignee->neighbours[FORCED] = assignor;
-        assignee->n1 = index;
         //only for GAME cells
         if (assignee->type == GAME) assignee->type = STAIR;
 
@@ -294,7 +292,6 @@ char assign_to_forced_then_second(cell* assignee, cell* assignor, int index)
     )
     {
         assignee->neighbours[SECOND] = assignor;
-        assignee->n2 = index;
         if (assignee->type == GAME) assignee->type = STAIR;
         return 'S';
     }
