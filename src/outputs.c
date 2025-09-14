@@ -1,5 +1,5 @@
 #include "outputs.h"
-
+#include <stdlib.h>
 //error handling
 void log_issue(ISSUE issue_type, CELL_TYPE cell_type, char fatal, char* given_name, char* resolution)
 {
@@ -148,8 +148,8 @@ char* sprint_direction(DIRECTION dir)
     switch (dir)
     {
         case 0:
-            break;
         case 1:
+            strcpy(buff, "");
             break;
         case NORTH:
             strcpy(buff, "North direction");
@@ -489,6 +489,15 @@ void print_movement_points_consumed_message(player *p, int dice, int cost)
 
 void print_hit_wall_message(player *p, int dice, DIRECTION dir)
 {
+    char effect[30] = {0};
+    if (p->status_effect == TRIGGERED) 
+    {
+        strcpy(effect, " is triggered and");
+    }
+    if (p->status_effect == DISORIENTED)
+    {
+        strcpy(effect, " is disoriented and");
+    }
     char p_direction[DIRECTION_LENGTH];
     char dir_direction[DIRECTION_LENGTH];
     strcpy(p_direction, sprint_direction(p->current_direction));
@@ -497,16 +506,16 @@ void print_hit_wall_message(player *p, int dice, DIRECTION dir)
     {
         printf
         (
-            "%c rolls and %i on the movement dice and cannot move in the %s. Player remains at %s\n",
-            p->name, dice, p_direction, sprint_cell(p->location)
+            "%c%s rolls and %i on the movement dice and cannot move in the %s. Player remains at %s\n",
+            p->name, effect, dice, p_direction, sprint_cell(p->location)
         );
     }
     else
     {
         printf
         (
-            "%c rolls and %i on the movement dice and %s on the direction dice and cannot move in the %s. Player remains at %s\n",
-            p->name, dice, dir_direction,  p_direction, sprint_cell(p->location)
+            "%c%s rolls and %i on the movement dice and %s on the direction dice and cannot move in the %s. Player remains at %s\n",
+            p->name, effect, dice, dir_direction,  p_direction, sprint_cell(p->location)
         );
     }
 
