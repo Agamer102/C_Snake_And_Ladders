@@ -1,4 +1,8 @@
-
- in ./inputs/stairs.txt was in an invalid format. Stair was not added.
-Object [0, 2, 5, 24]
- in ./inputs/poles.txt defined to/from an empty cell. Attempting to add pole from floor 1.
+Object [2, 0, 8, 1, 0, 24]
+ in ../tests/data/good/5/stairs.txt was incorrectly defined. A correct format was assumed for stair.
+Object [1, 0, 24, 0, 0, 24]
+ in ../tests/data/good/5/stairs.txt was incorrectly defined. A correct format was assumed for stair.
+Object [2, 5, 12, 1, 7, 21]
+ in ../tests/data/good/5/stairs.txt was incorrectly defined. A correct format was assumed for stair.
+Object [2, 0, 4, 19]
+ in ../tests/data/good/5/poles.txt defined to/from an empty cell. Attempting to add pole from floor 1.
