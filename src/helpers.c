@@ -97,9 +97,7 @@ void fill_section(
             cell* to_fill = (cell*)malloc(sizeof(cell));
             if (to_fill == NULL)
             {
-                puts("Memory allocation failed.");
-                free_map();
-                exit(-1);
+                log_issue(MEMORY_ALLOCATION_ERROR, type, 1, NULL, "Qutting game.");
             }
 
             *to_fill = empty_cell;

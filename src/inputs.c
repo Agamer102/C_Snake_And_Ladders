@@ -353,6 +353,7 @@ void add_valid_walls()
             log_issue(INVALID_DEFINITION, WALL, 0, buff, "Wall was not added.");
         }
 
+        int to_add = 1;
         if (start_width == end_width)
         {                
             int s_length = MIN(start_length, end_length);
@@ -362,16 +363,24 @@ void add_valid_walls()
             {
                 if (!cell_in_maze_bounds(floor, start_width, i))
                 {
-                    log_issue(OUT_OF_MAZE_BOUNDS, WALL, 0, buff, "Wall was not added.");
-                    continue;
+                    to_add = 0;
+                    break;
                 }
                 else if (maze[floor][start_width][i]->type != GAME)
                 {
-                    log_issue(OBJECT_COLLISION, WALL, 0, buff, "Wall was not added.");
-                    continue;
+                    to_add = 0;
+                    break;
                 }
             }
-            fill_section(floor, start_width, s_length, start_width, l_length, WALL);
+            if (!to_add)
+            {
+                log_issue(OUT_OF_MAZE_BOUNDS, WALL, 0, buff, "Wall was not added.");
+                continue;
+            }
+            for (int i = s_length ; i <= l_length ; i++)
+            {
+                maze[floor][start_width][i]->type == WALL;
+            }
         }
         else
         {
@@ -382,16 +391,24 @@ void add_valid_walls()
             {
                 if (!cell_in_maze_bounds(floor, i, start_length))
                 {
-                    log_issue(OUT_OF_MAZE_BOUNDS, WALL, 0, buff, "Wall was not added.");
-                    return;
+                    to_add = 0;
+                    break;
                 }
                 else if (maze[floor][i][start_length]->type != GAME)
                 {
-                    log_issue(OBJECT_COLLISION, WALL, 0, buff, "Wall was not added.");
-                    return;
+                    to_add = 0;
+                    break;
                 }
             }
-            fill_section(floor, s_width, start_length, l_width, start_length, WALL);
+            if (!to_add)
+            {
+                log_issue(OBJECT_COLLISION, WALL, 0, buff, "Wall was not added.");
+                continue;
+            }
+            for (int i = s_width; i<= l_width; i++)
+            {
+                maze[floor][i][start_length]->type = GAME;
+            }
         }
     }
     fclose(f); 
