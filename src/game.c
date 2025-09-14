@@ -527,7 +527,7 @@ movement_packet move_from_stair_pole(player* p, cell* start, char output)
     {
         case SUCCESS:
             //path is now valid, print the path the player took
-            if (output == 1 && visited_n > 1)
+            if (output == 1 && visited_n > 0)
             {
                 for (int i = 0; i < visited_n - 1; i++)
                 {
@@ -541,6 +541,19 @@ movement_packet move_from_stair_pole(player* p, cell* start, char output)
                     {
                         print_pole_message(p, vis, visited_cells[i + 1]);
                     }
+                }
+
+                //printing message edge case
+                //also avoid repetition for chains
+                if 
+                (
+                    visited_n > 0 && next != NULL &&
+                    (visited_n == 1 || visited_cells[visited_n - 1] != next)
+                )
+                {
+                    cell* last_visited = visited_cells[visited_n - 1];
+                    if (last_visited->type == POLE) print_pole_message(p, last_visited, next);
+                    else if (last_visited->type == STAIR) print_stair_message(p, last_visited, next);
                 }
             }
             return (movement_packet) {SUCCESS, next};

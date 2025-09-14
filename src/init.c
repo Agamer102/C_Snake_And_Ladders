@@ -14,12 +14,12 @@ void init()
     fix_neighbours();
     add_poles_from_list();
     validate_map();
-    print_stairs();
+    //print_stairs();
     assign_movement_points();
     assign_bawana_cells();
     //printf("TYPE START: %i\n", start_link_cell->type);
     //printf("TYPE BAWANA: %i\n", bawana_link_cell->type);
-    print_maze();
+    //print_maze();
 }
 
 

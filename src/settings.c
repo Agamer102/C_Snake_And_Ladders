@@ -1,10 +1,10 @@
 #include "settings.h"
 
-char* SEED_TXT = "./inputs/seed.txt";
-char* STAIRS_TXT = "./inputs/stairs.txt";
-char* POLES_TXT = "./inputs/poles.txt";
-char* WALLS_TXT = "./inputs/walls.txt";
-char* FLAG_TXT = "./inputs/flag.txt";
+char* SEED_TXT = "../tests/data/good/6/seed.txt";
+char* STAIRS_TXT = "../tests/data/good/6/stairs.txt";
+char* POLES_TXT = "../tests/data/good/6/poles.txt";
+char* WALLS_TXT = "../tests/data/good/6/walls.txt";
+char* FLAG_TXT = "../tests/data/good/6/flag.txt";
 char* LOG_TXT = "./log.txt";
 
 const int bawana_points[OPERATION_COUNT] =
@@ -23,5 +23,5 @@ const int bawana_duration[OPERATION_COUNT] =
     3, //FOOD_POISONING
     4, //DISORIENTED
     4, //TRIGGERED
-    0 //HAPPY: NOTE: This is realistic
+    0 //HAPPY
 };
