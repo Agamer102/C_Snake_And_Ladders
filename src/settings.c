@@ -1,10 +1,10 @@
 #include "settings.h"
 
-char* SEED_TXT = "../tests/data/good/6/seed.txt";
-char* STAIRS_TXT = "../tests/data/good/6/stairs.txt";
-char* POLES_TXT = "../tests/data/good/6/poles.txt";
-char* WALLS_TXT = "../tests/data/good/6/walls.txt";
-char* FLAG_TXT = "../tests/data/good/6/flag.txt";
+char* SEED_TXT = "../tests/data/bad/6/seed.txt";
+char* STAIRS_TXT = "../tests/data/bad/6/stairs.txt";
+char* POLES_TXT = "../tests/data/bad/6/poles.txt";
+char* WALLS_TXT = "../tests/data/bad/6/walls.txt";
+char* FLAG_TXT = "../tests/data/bad/6/flag.txt";
 char* LOG_TXT = "./log.txt";
 
 const int bawana_points[OPERATION_COUNT] =

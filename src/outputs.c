@@ -59,6 +59,12 @@ void log_issue(ISSUE issue_type, CELL_TYPE cell_type, char fatal, char* given_na
         case FLAG_UNREACHABLE:
             fprintf(log, "Flag is unreachable in this configuration.\n");
             quit_game_safely();
+        case BAWANA_ENTRANCE_BLOCKED:
+            fprintf(log, "The Bawana Entrance is blocked. The game cannot start.\n");
+            quit_game_safely();
+        case PLAYER_START_BLOCKED:
+            fprintf(log, "The first movement of a player is blocked by a wall. The game cannot start.\n");
+            quit_game_safely();
         case FILE_NOT_FOUND:
             fprintf(log, "File %s was not found.", file_name);
             break;
@@ -331,16 +337,6 @@ void print_start_rolled_6(player* p)
 }
 
 
-void print_food_poisoning_wears_off(player* p, CELL_OPERATION to_go)
-{
-    printf
-    (
-        "%c is now fit to proceed from the food poisoning episode and now placed on a %s and the effects take place.\n",
-        p->name, sprint_bawana_cell(to_go)
-    );
-}
-
-
 void print_disoriented_wears_off(player* p)
 {
     printf("%c has recovered from disorientation.\n", p->name);
@@ -459,7 +455,7 @@ void print_effect_movement_message(player *p, unsigned char dice, DIRECTION dir)
             printf
             (
                 "%c rolls and %u on the movement dice and is disoriented and move in the %s and moves %u cells and is placed at the %s.\n",
-                p->name, dice, p_direction, dice, sprint_cell(p->location)
+                p->name, dice, p_direction, dice, p_direction
             );
             break;
 
@@ -506,7 +502,7 @@ void print_hit_wall_message(player *p, int dice, DIRECTION dir)
     {
         printf
         (
-            "%c%s rolls and %i on the movement dice and cannot move in the %s. Player remains at %s\n",
+            "%c%s rolls and %i on the movement dice and cannot move in the %s. Player remains at %s.\n",
             p->name, effect, dice, p_direction, sprint_cell(p->location)
         );
     }
@@ -514,7 +510,7 @@ void print_hit_wall_message(player *p, int dice, DIRECTION dir)
     {
         printf
         (
-            "%c%s rolls and %i on the movement dice and %s on the direction dice and cannot move in the %s. Player remains at %s\n",
+            "%c%s rolls and %i on the movement dice and %s on the direction dice and cannot move in the %s. Player remains at %s.\n",
             p->name, effect, dice, dir_direction,  p_direction, sprint_cell(p->location)
         );
     }

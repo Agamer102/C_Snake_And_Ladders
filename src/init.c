@@ -124,6 +124,23 @@ void validate_map()
         print_maze();
         log_issue(FLAG_UNREACHABLE, FLAG, 1, NULL, "Qutting game.");
     }
+    else if (bawana_entrance->type != GAME && bawana_entrance->type != POLE && bawana_entrance->type != STAIR && bawana_entrance->type != FLAG)
+    {
+        printf("ERROR: Bawana entrance is blocked.\n");
+        print_maze();
+        log_issue(BAWANA_ENTRANCE_BLOCKED, bawana_entrance->type, 1, NULL, "Quitting game.");
+    }
+
+    //if a player's starting square is blocked, the maze is invalid
+    for (int i = 0; i < NUMBER_OF_PLAYERS; i++)
+    {
+        if (players[i].start->neighbours[FORCED]->type == WALL)
+        {
+            printf("ERROR: Player %c's first movement is blocked.\n", players[i].name);
+            print_maze();
+            log_issue(PLAYER_START_BLOCKED, WALL, 1, NULL, "Quitting game.");
+        }
+    }
 }
 
 
@@ -228,4 +245,3 @@ void get_game_block_array()
 {
     iterate_map((void *)&is_game_cell);
 }
-

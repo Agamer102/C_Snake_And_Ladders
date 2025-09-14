@@ -19,7 +19,6 @@ void print_turn(player* p);
 void print_start_no_6(player* p, unsigned char dice);
 void print_start_rolled_6(player* p);
 
-void print_food_poisoning_wears_off(player* p, CELL_OPERATION to_go);
 void print_disoriented_wears_off(player* p);
 void print_triggered_wears_off(player* p);
 void print_pole_message(player* p, cell* pole_cell, cell* next_cell);
