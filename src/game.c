@@ -48,7 +48,7 @@ void play_game()
             }
             recalculate_distances_to_flag();
             //print_maze();
-            //print_stairs();
+            print_stairs();
         }
     } while (++game_ticks);
     
@@ -74,6 +74,7 @@ void randomize_stair_direction()
 
     for (int i = 0; i < stair_count; i++)
     {
+        //WARNING FIX
         stairs[i].direction = rand() % 3;
         cell* start = stairs[i].start_cell;
         cell* end = stairs[i].end_cell;
@@ -248,6 +249,10 @@ void handle_effect_movement(player* current_player, unsigned char dice, DIRECTIO
                 movement_packet mov = move_from_stair_pole(current_player, next, 1);
                 status = mov.move_result;
                 next = mov.moved_to;
+                if (status != SUCCESS)
+                {
+                    break;
+                }
             case GAME:
                 //printf("Maybe fallen.\n");
                 //if (dice_m == dice && (next->type == POLE || next->type == STAIR)) exit(0);
@@ -422,34 +427,62 @@ movement_packet move_from_stair_pole(player* p, cell* start, char output)
     MOVEMENT path_result = SUCCESS;
     while (next != NULL && (next->type == STAIR || next->type == POLE))
     {
+        //printf("%i\n", game_ticks);
+        //printf("Visited number: %i\n", visited_n);
+        //print_cell(next);
         //if next is visited, we define a loop
-        if (next->visited == 1)
+        if (next->visited == game_ticks)
         {
             path_result = FELL_TO_LOOP;
             break;
         }
         //always add a visit to the array, so we can undo
-        next->visited = 1;
+        next->visited = game_ticks;
         visited_cells[visited_n++] = next;
 
         cell* forced = next->neighbours[FORCED];
         cell* second = next->neighbours[SECOND];
 
-        //trivial cases
-        if (forced == NULL || second == NULL)
+        //trivial case
+        if (forced == NULL && second == NULL)
         {
-            next = (forced != NULL) ? forced : second;
+            break;
+        }
+
+        //edge case, end of stair
+        if (forced == NULL && second && second->visited == game_ticks)
+        {
+            //end of chain
+            break;
+        }
+        if (second == NULL && forced && forced->visited == game_ticks)
+        {
+            //end of chain
+            break;
+        }
+        //other edge case, start of stair
+        if (forced == NULL && second)
+        {
+            next = second;
+            continue;
+        }
+        if (second == NULL && forced)
+        {
+            next = forced;
             continue;
         }
 
+
+        //printf("\nTRIVIAL OVER.\n");
+
         //visited case, pick other one
         //prevents bidirectional looping
-        if (forced->visited && !second->visited) { next = second; continue;}
-        if (second->visited && !forced->visited) { next = forced; continue;}
-        if (forced->visited && second->visited)
+        if (forced->visited == game_ticks && second->visited != game_ticks) { next = second; continue;}
+        if (second->visited  == game_ticks && forced->visited != game_ticks) { next = forced; continue;}
+        if (forced->visited == game_ticks && second->visited == game_ticks)
         {
-            //loop
             path_result = FELL_TO_LOOP;
+            next = NULL;
             break;
         }
 
@@ -462,7 +495,7 @@ movement_packet move_from_stair_pole(player* p, cell* start, char output)
         }
         if (second->type == LINK_START)
         {
-            forced_cost = p->start->distance_to_flag;
+            second_cost = p->start->distance_to_flag;
         }
 
 
@@ -478,45 +511,12 @@ movement_packet move_from_stair_pole(player* p, cell* start, char output)
         }
         else
         {
-            if (forced == second)
-            {
-                next = forced;
-                continue;
-            }
-            movement_packet forced_c = move_from_stair_pole(p, forced, 0);
-            movement_packet second_c = move_from_stair_pole(p, second, 0);
-            if (forced_c.move_result == SUCCESS && second_c.move_result == SUCCESS)
-            {
-                if (forced_c.cost <= second_c.cost)
-                {
-                    next = forced;
-                    continue;
-                }
-                else
-                {
-                    next = second;
-                    continue;
-                }
-            }
-            if (forced_c.move_result == SUCCESS)
-            {
-                next = forced;
-                continue;
-            }
-            if (second_c.move_result == SUCCESS)
-            {
-                next = second;
-                continue;
-            }
-            break;
+            //if equal, pick randomly
+            next = rand() % 2 == 0 ? forced: second;
+            continue;
         }
     }
-
-    //undo visited
-    for (int i = 0; i < visited_n; i++)
-    {
-        visited_cells[i]->visited = 0;
-    }
+    //printf("END of SEARCH\n");
 
     if (next == NULL)
     {
@@ -529,9 +529,8 @@ movement_packet move_from_stair_pole(player* p, cell* start, char output)
     {
         case SUCCESS:
             //path is now valid, print the path the player took
-            if (output == 1)
+            if (output == 1 && visited_n > 1)
             {
-                visited_cells[visited_n++] = next;
                 for (int i = 0; i < visited_n - 1; i++)
                 {
                     cell* vis = visited_cells[i];
@@ -546,9 +545,9 @@ movement_packet move_from_stair_pole(player* p, cell* start, char output)
                     }
                 }
             }
-            return (movement_packet) {SUCCESS, next, next->distance_to_flag};
+            return (movement_packet) {SUCCESS, next};
         default:
-            return (movement_packet) {path_result, next, next->distance_to_flag};
+            return (movement_packet) {path_result, next};
             
     }
 }

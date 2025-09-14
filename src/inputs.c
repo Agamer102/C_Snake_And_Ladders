@@ -177,6 +177,7 @@ void get_valid_stairs()
 
 void get_valid_poles()
 {
+    pole_count = 0;
     FILE *f = fopen(POLES_TXT, "r");
     if (f == NULL)
     {
@@ -262,7 +263,7 @@ void get_valid_poles()
         }
 
         if (
-            (top_cell->type != GAME && top_cell->type != STAIR) ||
+            (top_cell->type != GAME && top_cell->type != STAIR && top_cell->type != POLE) ||
             (bottom_cell->type != GAME && bottom_cell->type != STAIR && bottom_cell->type != LINK_BAWANA && bottom_cell->type != LINK_START)
         )
         {
@@ -279,15 +280,10 @@ void get_valid_poles()
         if (top_floor - bottom_floor == 2)
         {
             cell* middle_cell = maze[1][width][length];
-            if (middle_cell == NULL)
+            if (middle_cell != NULL && middle_cell->type != WALL)
             {
-                continue;
+                to_add.middle_cell = middle_cell;
             }
-            else if (middle_cell->type == WALL)
-            {
-                continue;
-            }
-            to_add.middle_cell = middle_cell;
         }
 
         pole_list[pole_count++] = to_add;

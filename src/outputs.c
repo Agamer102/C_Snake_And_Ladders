@@ -7,8 +7,7 @@ void log_issue(ISSUE issue_type, CELL_TYPE cell_type, char fatal, char* given_na
     //if logfile itself is an issue
     if (log == NULL)
     {
-        printf("FATAL ERROR.\n");
-        printf("Unable to open log.txt, quitting game.");
+        printf("ERROR: Unable to open log.txt, quitting game.\n");
         quit_game_safely();
     }
 
@@ -27,6 +26,8 @@ void log_issue(ISSUE issue_type, CELL_TYPE cell_type, char fatal, char* given_na
         case FLAG:
             strcpy(file_name, FLAG_TXT);
             break;
+        case GAME:
+            strcpy(file_name, SEED_TXT);
         default:
             strcpy(file_name, "");
             break;
@@ -34,15 +35,18 @@ void log_issue(ISSUE issue_type, CELL_TYPE cell_type, char fatal, char* given_na
 
     if (fatal)
     {
-        printf("FATAL ERROR.\n");
+        printf("ERROR: Please check log.txt.\n");
         fprintf(log, "ERROR: ");
     }
     switch (issue_type)
     {
         case MEMORY_ALLOCATION_ERROR:
-            fprintf(log, "ERROR: Memory allocation for %s failed.\n", file_name);
+            fprintf(log, "Memory allocation for %s failed.\n", file_name);
             quit_game_safely();
             break;
+        case FLAG_UNREACHABLE:
+            fprintf(log, "Flag is unreachable in this configuration.\n");
+            quit_game_safely();
         case FILE_NOT_FOUND:
             fprintf(log, "File %s was not found.", file_name);
             break;
@@ -223,10 +227,10 @@ void print_maze()
                     case LINK_LOOP:
                     case LINK_BAWANA:
                     case LINK_START:
-                        printf(" %i ", current_cell->distance_to_flag);
+                        printf(" L ");
                         break;
                     case GAME:
-                        printf(COLOR_GAME " %i " RESET, current_cell->distance_to_flag);
+                        printf(COLOR_GAME " G " RESET);
                         break;
                     case START:
                         printf(COLOR_START " @ " RESET);
@@ -235,10 +239,10 @@ void print_maze()
                         printf(COLOR_WALL " W " RESET);
                         break;
                     case POLE:
-                        printf(COLOR_POLE " %i " RESET, current_cell->distance_to_flag);
+                        printf(COLOR_POLE " P " RESET);
                         break;
                     case STAIR:
-                        printf(COLOR_STAIR " %i " RESET, current_cell->distance_to_flag);
+                        printf(COLOR_STAIR " S " RESET);
                         break;
                     case FLAG:
                         printf(COLOR_FLAG " F " RESET);
@@ -354,7 +358,7 @@ void print_pole_message(player* p, cell* pole_cell, cell* next_cell)
     }
     printf
     (
-        "%c lands on %s which is a pole cell.\n %c slides down and now placed at %s in floor %u.\n",
+        "%c lands on %s which is a pole cell. %c slides down and now placed at %s in floor %u.\n",
         p->name, pole_name, p->name, next_name, next_cell->floor
     );
 }

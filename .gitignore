@@ -7,3 +7,5 @@ a.out
 *.s
 nm
 output.txt
+*.rar
+*.zip

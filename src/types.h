@@ -73,6 +73,7 @@ typedef enum
 typedef enum
 {
     MEMORY_ALLOCATION_ERROR, //always an ERROR 
+    FLAG_UNREACHABLE, //ERROR
     FILE_NOT_FOUND,
     OUT_OF_MAZE_BOUNDS,
     DEFINED_IN_VOID,
@@ -97,7 +98,7 @@ typedef struct cell
     int n1;
     int n2;
     int distance_to_flag;
-    char visited;
+    int visited;
 } cell;
 //n1, n2 is set by default to -1 and are used
 /*
@@ -113,7 +114,6 @@ typedef struct
 {
     MOVEMENT move_result;
     cell* moved_to;
-    int cost;
 } movement_packet;
 
 

@@ -123,7 +123,7 @@ void validate_map()
     {
         printf("ERROR: The flag is impossible to find in this configuration.\n");
         print_maze();
-        quit_game_safely();
+        log_issue(FLAG_UNREACHABLE, FLAG, 1, NULL, "Qutting game.");
     }
 }
 
