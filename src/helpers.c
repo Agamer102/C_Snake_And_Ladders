@@ -344,7 +344,7 @@ void assign_bfs_neighbour_trivial(cell* current_cell)
         //the pole HAS NO BFS neighbours, because it's fixed
         current_cell->bfs_neighbours[FORCED] = NULL;
         current_cell->bfs_neighbours[SECOND] = NULL;
-        if (current_cell->neighbours[FORCED != NULL])
+        if (current_cell->neighbours[FORCED] != NULL)
             current_cell->neighbours[FORCED]->bfs_neighbours[FORCED] = current_cell;
         return;
     }
@@ -573,5 +573,5 @@ void swap(int* a, int *b)
 {
     int temp = *a;
     *a = *b;
-    *a = temp;
+    *b = temp;
 }

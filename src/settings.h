@@ -6,6 +6,7 @@
 #define FLOORS 3
 #define WIDTH 10
 #define LENGTH 25
+#define TURN_CAP 10000000
 #define NAME_LENGTH 11
 #define NUMBER_OF_PLAYERS 3
 #define GAME_CELL_CAP 500

@@ -106,9 +106,9 @@ void print_cell(cell *to_print)
     //printf("Trying to print cell %p\n", to_print);
     printf(
         NAME_FORMAT, 
-        (unsigned int)to_print->floor, 
-        (unsigned int)to_print->width, 
-        (unsigned int)to_print->length
+        to_print->floor, 
+        to_print->width, 
+        to_print->length
     );
 }
 
@@ -155,7 +155,7 @@ char* sprint_direction(DIRECTION dir)
             strcpy(buff, "North direction");
             break;
         case EAST:
-            strcpy(buff, "East directon");
+            strcpy(buff, "East direction");
             break;
         case SOUTH:
             strcpy(buff, "South direction");
@@ -370,7 +370,7 @@ void print_pole_message(player* p, cell* pole_cell, cell* next_cell)
     }
     printf
     (
-        "%c lands on %s which is a pole cell. %c slides down and now placed at %s in floor %u.\n",
+        "%c lands on %s which is a pole cell. %c slides down and now placed at %s in floor %hhu.\n",
         p->name, pole_name, p->name, next_name, next_cell->floor
     );
 }
@@ -392,7 +392,7 @@ void print_stair_message(player* p, cell* stair_cell, cell* next_cell)
     }
     printf
     (
-        "%c lands on %s which is a stair cell. %c takes the stairs and now placed at %s in floor %i.\n",
+        "%c lands on %s which is a stair cell. %c takes the stairs and now placed at %s in floor %hhu.\n",
         p->name, stair_name, p->name, next_name, next_cell->floor
     );
 }
@@ -451,7 +451,7 @@ void print_effect_movement_message(player *p, unsigned char dice, DIRECTION dir)
                 printf
                 (
                     "%c is triggered and rolls and %u on the movement dice and %s on the direction dice, changes direction to %s and move in the %s and moves %u cells and is placed at the %s.\n",
-                    p->name, dice / 2, dir_direction, p_direction, sprint_direction(p->current_direction), dice * 2, sprint_cell(p->location)
+                    p->name, dice / 2, dir_direction, p_direction, sprint_direction(p->current_direction), dice, sprint_cell(p->location)
                 );   
             }
             break;
@@ -482,18 +482,34 @@ void print_movement_points_consumed_message(player *p, int dice, int cost)
 {
     printf
     (
-        "%c moved %u that cost %i movement points and is left with %u and is moving in the %s.\n",
+        "%c moved %u that cost %i movement points and is left with %i and is moving in the %s.\n",
         p->name, dice, cost, p->movement_points, sprint_direction(p->current_direction)
     );
 }
 
-void print_hit_wall_message(player *p, int dice)
+void print_hit_wall_message(player *p, int dice, DIRECTION dir)
 {
-    printf
-    (
-        "%c rolls and %i on the movement dice and cannot move in the %s. Player remains at %s\n",
-        p->name, dice, sprint_direction(p->current_direction), sprint_cell(p->location)
-    );
+    char p_direction[DIRECTION_LENGTH];
+    char dir_direction[DIRECTION_LENGTH];
+    strcpy(p_direction, sprint_direction(p->current_direction));
+    strcpy(dir_direction, sprint_direction(dir));
+    if (dir == 0)
+    {
+        printf
+        (
+            "%c rolls and %i on the movement dice and cannot move in the %s. Player remains at %s\n",
+            p->name, dice, p_direction, sprint_cell(p->location)
+        );
+    }
+    else
+    {
+        printf
+        (
+            "%c rolls and %i on the movement dice and %s on the direction dice and cannot move in the %s. Player remains at %s\n",
+            p->name, dice, dir_direction,  p_direction, sprint_cell(p->location)
+        );
+    }
+
 }
 
 

@@ -28,7 +28,7 @@ void print_ran_out_of_movement_points_message(player *p);
 void print_effect_movement_message(player *p, unsigned char dice, DIRECTION dir);
 void print_still_food_poisoned_message(player* p);
 void print_movement_points_consumed_message(player *p, int dice, int cost);
-void print_hit_wall_message(player *p, int dice);
+void print_hit_wall_message(player *p, int dice, DIRECTION dir);
 void print_fell_to_loop_message(player *p);
 void print_fell_to_start_message(player *p);
 void print_fell_to_dead_message(player* p);

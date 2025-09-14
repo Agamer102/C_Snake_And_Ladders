@@ -50,7 +50,7 @@ void play_game()
             //print_maze();
             print_stairs();
         }
-    } while (++game_ticks);
+    } while (++game_ticks && game_ticks < TURN_CAP);
     
 }
 
@@ -102,6 +102,7 @@ void turn(player* current_player)
 {
     printf("\n");
     print_turn(current_player);
+   // printf("Player %c direction_dice counter: %d\n", current_player->name, current_player->direction_dice);
     if (current_player->movement_points > 1000 || current_player->movement_points < 0)
     {
         exit(0);
@@ -205,8 +206,10 @@ void handle_effect_duration(player* current_player)
         {
             case DISORIENTED:
                 print_disoriented_wears_off(current_player);
+                break;
             case TRIGGERED:
                 print_triggered_wears_off(current_player);
+                break;
         }
     }
     else
@@ -301,7 +304,7 @@ void handle_effect_movement(player* current_player, unsigned char dice, DIRECTIO
     }
 
     int net_movement_points = movement_point_sum * movement_point_factor;
-    int dice_cost = WALL_HIT_DICE_COST * ((dice>0?1:0) + ((dir>0?1:0)));
+    int dice_cost = WALL_HIT_DICE_COST;
     switch (status)
     {
         case SUCCESS:
@@ -350,7 +353,7 @@ void handle_effect_movement(player* current_player, unsigned char dice, DIRECTIO
             else
             {
                 current_player->movement_points -= dice_cost;
-                print_hit_wall_message(current_player, dice);
+                print_hit_wall_message(current_player, dice, dir);
                 return;
             }
         case FELL_TO_LOOP:
@@ -672,22 +675,23 @@ unsigned char roll_dice()
 //returns direction if rolled, 0 if not and 6 if EMPTY
 DIRECTION roll_direction_dice_for(player* current_player)
 {
-    if (current_player->direction_dice % 4 == 3)
+    if (current_player->direction_dice == 3)
     {
+        //printf("Player %c direction_dice counter: %d\n", current_player->name, current_player->direction_dice);
         DIRECTION direction_dice = roll_dice();
-        if (direction_dice != SECOND && direction_dice != DIRECTION_COUNT)
+        if (direction_dice == 1 || direction_dice == 6)
         {
+            current_player->direction_dice = 0;
+            return 6;
+        }
+        else
+        {
+            current_player->direction_dice = 0;
             current_player->current_direction = direction_dice;
-            current_player->direction_dice++;
-            current_player->direction_dice = current_player->direction_dice % 4;
             return direction_dice;
         }
-        current_player->direction_dice++;
-        current_player->direction_dice = current_player->direction_dice % 4;
-        return DIRECTION_COUNT;
     }
     current_player->direction_dice++;
-    current_player->direction_dice = current_player->direction_dice % 4;
     return 0;
 }
 
