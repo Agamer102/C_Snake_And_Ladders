@@ -7,7 +7,7 @@
 #define DEQUE_CAP 10000
 #define BFS_NEIGHBOURS 3
 #define PATH_DEPTH_V 200
-#define NAME_FORMAT "[%1u, %1u, %02u]"
+#define NAME_FORMAT "[%hhu, %hhu, %02hhu]"
 #define STAIR_FORMAT "[%1u, %1u, %2u, %1u, %1u, %2u]"
 #define POLE_FORMAT "[%1u, %1u, %1u, %2u]"
 #define WALL_FORMAT "[%1u, %1u, %2u, %1u, %2u]"
