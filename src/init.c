@@ -113,7 +113,6 @@ void generate_map()
 void validate_map()
 {
     reset_flag_distances();
-    reset_visited_cells();
     assign_bfs_neighbours_trivial();
     bfs(flag);
     assign_dead_cells();
@@ -124,50 +123,6 @@ void validate_map()
         printf("ERROR: The flag is impossible to find in this configuration.\n");
         print_maze();
         log_issue(FLAG_UNREACHABLE, FLAG, 1, NULL, "Qutting game.");
-    }
-}
-
-
-/*
-DEAD cells, are cells from which a player can never return back
-to the normal maze. This will hold true, even when the stair direction changes
-as it's calculated using the ideal bidirectional stairs case.
-*/
-void get_distances_to_flag()
-{
-    print_maze();
-    bfs(flag);
-    //here now, we can apply cost of bawana start to bawana
-    bawana_link_cell->distance_to_flag = bawana_entrance->distance_to_flag;
-}
-
-
-void reverse_poles()
-{
-    for (int i = 0; i < pole_count; i++)
-    {
-        //reverse the poles, ensure it can't point to START or BAWANA
-        pole current = poles[i];
-        if (
-            current.bottom_cell->type == START || 
-            current.bottom_cell->type == BAWANA
-        )
-        {
-            if (current.middle_cell != NULL)
-            {
-                current.middle_cell->neighbours[FORCED] = NULL;
-                current.middle_cell->type = GAME;
-            }
-            current.top_cell->neighbours[FORCED] = NULL;
-        }
-
-        //now we can safetly reverse 
-        if (current.middle_cell != NULL)
-        {
-            current.middle_cell->neighbours[FORCED] = current.top_cell;
-        }
-        current.bottom_cell->neighbours[FORCED] = current.top_cell;
-        current.top_cell->neighbours[FORCED] = NULL;
     }
 }
 

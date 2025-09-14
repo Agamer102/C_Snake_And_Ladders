@@ -17,7 +17,6 @@ void handle_effect_duration(player* current_player);
 void handle_effect_movement(player* current_player, unsigned char dice, DIRECTION direction_dice);
 MOVEMENT move_to_game(cell* to_move_to);
 movement_packet move_from_stair_pole(player* p, cell* start, char output);
-movement_packet move_from_stair_pole_new(player* p, cell* start, char output);
 void transport_to_bawana(player* current_player, int food_poisoned);
 unsigned char roll_dice();
 DIRECTION roll_direction_dice_for(player* current_player);

@@ -54,7 +54,8 @@ typedef enum
 {
     BIDIRECTIONAL,
     TOP_TO_BOTTOM,
-    BOTTOM_TO_TOP
+    BOTTOM_TO_TOP,
+    STAIR_TYPES
 } STAIR_DIRECTION;
 
 typedef enum

@@ -24,8 +24,6 @@ void fill_section(
 void initialize_players();
 void fix_neighbours();
 void fix_cell_neighbour(cell* current_cell);
-void get_distances_to_flag();
-void reverse_poles();
 void add_poles_from_list();
 void assign_movement_points();
 void assign_bawana_cells();

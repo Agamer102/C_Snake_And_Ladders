@@ -32,16 +32,12 @@ char assign_to_forced_then_second(cell* assignee, cell* assignor, int index);
 void remove_stair_from_cell(cell* receiver, cell* remove);
 void assign_bfs_neighbours_trivial();
 void assign_bfs_neighbour_trivial(cell* current_cell);
-void assign_bfs_neighbours();
-void assign_bfs_neighbour(cell* current_cell);
 void assign_dead_cells();
 void assign_dead_cell(cell* current_cell);
 void reset_flag_distances();
 void reset_flag_distance(cell* current_cell);
 void clear_bfs_neighbours();
 void clear_bfs_neighbour(cell* current_cell);
-void reset_visited_cells();
-void reset_visited_cell(cell* current_cell);
 void quit_game_safely();
 void swap(int* a, int *b);
 
